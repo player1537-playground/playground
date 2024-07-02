@@ -1,0 +1,24 @@
+[project]
+name = "web"
+version = "0.1.0"
+description = "web backend for Scribe"
+authors = [ { name="https://github.com/player1537" } ]
+license = { text = "wtfpl" }
+classifiers = [
+    "Development Status :: 4 - Beta",
+]
+
+dependencies = [
+    "fastapi",
+    "requests",
+    "tqdm",
+    "fastcdc",
+    "scipy",
+    "numpy",
+    "pandas",
+    "more_itertools",
+    "geopandas",
+]
+
+[tool.setuptools.package-data]
+web = ["static/*", "templates/*"]

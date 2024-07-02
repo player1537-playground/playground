@@ -1,0 +1,9 @@
+fastapi
+requests
+tqdm
+fastcdc
+scipy
+numpy
+pandas
+more_itertools
+geopandas
