@@ -89,121 +89,13 @@ def LLM(
 
 
 @auto.functools.cache
-def TruncatedICD10CM():
-    root = config.datadir
-    path = root / 'Truncated ICD-10-CM.csv'
-    
-    df = auto.pd.read_csv(
-        path,
-        index_col='code',
-        dtype=str,
-        quoting=auto.csv.QUOTE_NONNUMERIC,
-    )
-
-    return df
+def ICD10CM() -> auto.pd.DataFrame:
+    return util.ICD10CM()
 
 
 @auto.functools.cache
-def ICD10CM():
-    def scope(url) -> auto.pathlib.Path:
-        root = config.datadir
-        parts = auto.urllib.parse.urlparse(url)
-        path = auto.pathlib.Path(parts.path)
-        path = root / path.name
-
-        if not path.exists():
-            with path.open('wb') as f:
-                with auto.requests.get(url, stream=True) as r:
-                    for chunk in r.iter_content(chunk_size=10240):
-                        f.write(chunk)
-        assert path.exists()
-        assert path.stat().st_size > 0
-
-        return path
-
-    table_and_index = \
-        scope('https://ftp.cdc.gov/pub/Health_Statistics/NCHS/Publications/ICD10CM/2024-Update/icd10cm-Table%20and%20Index-April-2024.zip')
-    descriptions = \
-        scope('https://ftp.cdc.gov/pub/Health_Statistics/NCHS/Publications/ICD10CM/2024-Update/icd10cm-Codes-Descriptions-April-2024.zip')
-    addenda = \
-        scope('https://ftp.cdc.gov/pub/Health_Statistics/NCHS/Publications/ICD10CM/2024-Update/icd10cm-addenda-files-April-2024.zip')
-
-    # for path in [table_and_index, descriptions, addenda]:
-    #     print(path.name)
-    #     with auto.zipfile.ZipFile(path, 'r') as arc:
-    #         for info in arc.infolist():
-    #             print(info)
-
-    root = auto.zipfile.Path(descriptions)
-    path = root / 'icd10cm-codes-April-2024.txt'
-
-    # with auto.mediocreatbest.Textarea():
-    #     with path.open('r') as f:
-    #         # lines = auto.more_itertools.take(100, f)
-    #         lines = auto.collections.deque(f, maxlen=100)
-    #         for line in lines:
-    #             print(line, end='')
-
-    #=> "Z949    Transplanted organ and tissue status, unspecified"
-    #=> "Z950    Presence of cardiac pacemaker"
-    #=> "Z951    Presence of aortocoronary bypass graft"
-    #=> "Z952    Presence of prosthetic heart valve"
-    #=> "Z953    Presence of xenogenic heart valve"
-    #=> "Z954    Presence of other heart-valve replacement"
-    #=> "Z955    Presence of coronary angioplasty implant and graft"
-    #=> "Z95810  Presence of automatic (implantable) cardiac defibrillator"
-    #=> "Z95811  Presence of heart assist device"
-    #=> "Z95812  Presence of fully implantable artificial heart"
-    #=> "Z95818  Presence of other cardiac implants and grafts"
-
-    df = []
-    with path.open('r') as f:
-        for line in f:
-            code, desc = auto.re.split(r'\s+', line, maxsplit=1)
-            code = code.strip()
-            desc = desc.strip()
-            df.append((code, desc))
-
-    df = auto.pandas.DataFrame(
-        df,
-        columns=['code', 'desc'],
-    )
-    df = df.set_index('code')
-
-    return df
-
-
-@auto.functools.cache
-def CompleteICD10CM(
-) -> auto.pd.DataFrame:
-    icd10cm = ICD10CM()
-    trunc = TruncatedICD10CM()
-
-    df = auto.pd.concat([
-        icd10cm,
-        trunc,
-    ])
-
-    # df = df.query('code.str.len() <= 4')
-
-    return df
-
-
-@auto.functools.cache
-def TabularICD10CM(
-) -> auto.pd.DataFrame:
-    csv_root = config.datadir
-    csv_path = csv_root / 'TabularICD10CM.csv'
-    assert csv_path.exists(), csv_path
-    
-    df = auto.pd.read_csv(
-        csv_path,
-        dtype=str,
-        na_filter=False,
-    )
-    df.set_index('dx10', inplace=True)
-    
-    return df
+def ICD10PCS() -> auto.pd.DataFrame:
+    return util.ICD10PCS()
 
 
 @auto.functools.cache
@@ -284,134 +176,6 @@ def PD2PD():
     return df
 
 
-@auto.functools.cache
-def ICD10PCS():
-    href = 'https://www.cms.gov/files/zip/2023-icd-10-pcs-order-file-long-and-abbreviated-titles-updated-01/11/2023.zip'
-    root = config.datadir
-    path = root / 'ICD10PCS.zip'
-    if not path.exists():
-        with auto.requests.request(
-            'GET',
-            href,
-            stream=True,
-        ) as r:
-            r.raise_for_status()
-            with path.open('wb') as f:
-                for chunk in r.iter_content(chunk_size=8192):
-                    f.write(chunk)
-    assert path.exists()
-
-    # with auto.zipfile.ZipFile(path, 'r') as arc:
-    #     /auto.pprint.pp arc.infolist()
-    # [<ZipInfo filename='icd10pcsOrderFile.pdf' compress_type=deflate external_attr=0x20 file_size=183599 compress_size=173971>,
-    #  <ZipInfo filename='icd10pcs_order_2023.txt' compress_type=deflate external_attr=0x20 file_size=12118243 compress_size=1127543>,
-    #  <ZipInfo filename='order_addenda_2023.txt' compress_type=deflate external_attr=0x20 file_size=6480 compress_size=1060>]
-
-    # with auto.zipfile.ZipFile(path, 'r') as arc:
-    #     with arc.open('icd10pcsOrderFile.pdf', 'r') as f:
-    #         with auto.pdfplumber.open(f) as pdf:
-    #             print(pdf.pages[0].extract_text())
-    # ICD-10-PCS Order File
-    # The ICD-10-PCS order file contains a unique “order number” for each valid code or header, a
-    # flag distinguishing valid codes from headers, and both long and short descriptions combined in a
-    # single file so they are easier to find and use. icd10pcs_order_[year].txt contains ICD-10-PCS
-    # (procedure) codes valid beginning October 1 of the upcoming fiscal year.
-    # For each ICD-10-PCS code, the order file provides a unique five-digit “order number”. The
-    # codes are numbered in “tabular order,” i.e., the order in which the contents of the code system
-    # are displayed in the official document containing the system. This includes “headers,” which are
-    # not valid codes and are included as a convenience for other uses. The ICD-10-PCS order files
-    # will be updated every time the ICD-10-PCS official documents are updated. The order numbers
-    # are likely to change with each update.
-    # To determine which of two ICD-10-PCS codes comes first in the official document, look up each
-    # code in the order file and find its order number. The code with the lower order comes first if its
-    # order number is lower, regardless of the characters used in forming the codes themselves.
-    # The order file can be used to obtain a standard interpretation of a “range of codes” – any
-    # expression composed of two codes with a dash between them (for example 0270-0273). To
-    # obtain the list of codes contained in a range, look up the order number of the lower code and the
-    # order number of the higher code. Only codes whose order number is at least as high as the lower
-    # order number and no higher than the higher order number are in the range.
-    # Each line of the order file contains one code. A line is of variable length but never longer than
-    # 400 characters maximum. Fields are defined for the ICD-10-PCS order file as follows:
-    # Position Length Contents
-    # 1 5 Order number, right justified, zero filled.
-    # 6 1 Blank
-    # 7 7 ICD-10-PCS code
-    # 14 1 Blank
-    # 15 1 0 if the code is a “header” –not valid for HIPAA-covered transactions.
-    # 1 if the code is valid for submission for HIPAA-covered transactions.
-    # 16 1 Blank
-    # 17 60 Short description
-    # 77 1 Blank
-    # 78 To end Long description
-
-    root = auto.zipfile.Path(path)
-    path = root / 'icd10pcs_order_2023.txt'
-
-    # with path.open('r') as f:
-    #     print(f.read(2000))
-    # 00001 001     0 Central Nervous System and Cranial Nerves, Bypass            Central Nervous System and Cranial Nerves, Bypass
-    # 00002 0016070 1 Bypass Cereb Vent to Nasophar with Autol Sub, Open Approach  Bypass Cerebral Ventricle to Nasopharynx with Autologous Tissue Substitute, Open Approach
-    # 00003 0016071 1 Bypass Cereb Vent to Mastoid Sinus w Autol Sub, Open         Bypass Cerebral Ventricle to Mastoid Sinus with Autologous Tissue Substitute, Open Approach
-    # 00004 0016072 1 Bypass Cereb Vent to Atrium with Autol Sub, Open Approach    Bypass Cerebral Ventricle to Atrium with Autologous Tissue Substitute, Open Approach
-    # 00005 0016073 1 Bypass Cereb Vent to Blood Vess w Autol Sub, Open            Bypass Cerebral Ventricle to Blood Vessel with Autologous Tissue Substitute, Open Approach
-    # 00006 0016074 1 Bypass Cereb Vent to Pleural Cav w Autol Sub, Open           Bypass Cerebral Ventricle to Pleural Cavity with Autologous Tissue Substitute, Open Approach
-    # 00007 0016075 1 Bypass Cereb Vent to Intestine with Autol Sub, Open Approach Bypass Cerebral Ventricle to Intestine with Autologous Tissue Substitute, Open Approach
-    # 00008 0016076 1 Bypass Cereb Vent to Periton Cav w Autol Sub, Open           Bypass Cerebral Ventricle to Peritoneal Cavity with Autologous Tissue Substitute, Open Approach
-    # 00009 0016077 1 Bypass Cereb Vent to Urinary Tract w Autol Sub, Open         Bypass Cerebral Ventricle to Urinary Tract with Autologous Tissue Substitute, Open Approach
-    # 00010 0016078 1 Bypass Cereb Vent to Bone Mar with Autol Sub, Open Approach  Bypass Cerebral Ventricle to Bone Marrow with Autologous Tissue Substitute, Open Approach
-    # 00011 001607A 1 Bypass Cereb Vent to Subgaleal with Autol Sub, Open Approach Bypass Cerebral Ventricle to Subgaleal Space with Autologous Tissue Substitute, Open Approach
-    # 00012 001607B 1 Bypass Cereb Vent to Cereb Cistern w Autol Sub, Open         Bypass Cerebral Ventricle to Cerebral Cisterns with Autologous Tissue Substitute, Open Approach
-    # 00013 00160J0 1 Byp
-
-    colspecs = []
-    names = []
-
-    i = 0
-    def scope(n: str, s: str | None):
-        names.append(n)
-
-        nonlocal i
-        if s is not None:
-            colspecs.append((i, i + len(s)))
-            i += len(s) + 1
-        else:
-            colspecs.append((i, auto.sys.maxsize))
-
-    scope('Order', '00001')
-    scope('PD', '0016070')
-    scope('Is Header', '0')
-    scope('Short', 'Central Nervous System and Cranial Nerves, Bypass           ')
-    scope('Long', None)
-
-    with path.open('r') as f:
-        df = auto.pd.read_fwf(
-            f,
-            names=names,
-            header=0,
-            colspecs=colspecs,
-            dtype=str,
-            na_filter=False,
-        )
-
-    df.drop(columns=[
-        'Order',
-    ], inplace=True)
-
-    df['Is Header'] = df['Is Header'].replace({
-        # NOTE(th): This is confusing, but it's how it's coded.
-        '0': True,
-        '1': False,
-    })
-    
-    df['PD'] = df['PD'].str.strip()
-    df.set_index('PD', inplace=True)
-
-    df['Short'] = df['Short'].str.strip()
-    df['Long'] = df['Long'].str.strip()
-
-    return df
-
-
 @auto.contextlib.asynccontextmanager
 async def lifespan(app: auto.fastapi.FastAPI):
     yield
@@ -441,7 +205,7 @@ async def icd10cm(
     icd10cm: auto.typing.Annotated[
         auto.pd.DataFrame,
         auto.fastapi.Depends(
-            TabularICD10CM,
+            ICD10CM,
         ),
     ],
 ) -> icd10cmResponse:
@@ -489,7 +253,7 @@ async def analyze(
     request: AnalyzeRequest,
 ) -> AnalyzeResponse:
     llm = LLM('sahara/nomic')
-    icd10cm = CompleteICD10CM()
+    icd10cm = ICD10CM()
 
     def Passage(*, code: str) -> str:
         desc = icd10cm.loc[code, 'desc']
@@ -751,7 +515,7 @@ async def dx2pd(
     )
     
     for pd, score in row.items():
-        desc = icd10pcs.loc[pd, 'Long']
+        desc = icd10pcs.loc[pd, 'desc']
         
         response.best.append(dx2pdResponseItem(
             pd=pd,
@@ -789,7 +553,7 @@ async def dx2dx(
     icd10cm: auto.typing.Annotated[
         auto.pd.DataFrame,
         auto.fastapi.Depends(
-            CompleteICD10CM,
+            ICD10CM,
         ),
     ],
 ) -> dx2dxResponse:
@@ -850,7 +614,7 @@ async def pd2dx(
     icd10cm: auto.typing.Annotated[
         auto.pd.DataFrame,
         auto.fastapi.Depends(
-            CompleteICD10CM,
+            ICD10CM,
         ),
     ],
 ) -> pd2dxResponse:
@@ -934,7 +698,7 @@ async def pd2pd(
     )
     
     for pd, score in row.items():
-        desc = icd10pcs.loc[pd, 'Long']
+        desc = icd10pcs.loc[pd, 'desc']
         
         response.best.append(pd2pdResponseItem(
             pd=pd,
@@ -966,7 +730,7 @@ async def foo(
     icd10cm: auto.typing.Annotated[
         auto.pd.DataFrame,
         auto.fastapi.Depends(
-            CompleteICD10CM,
+            ICD10CM,
         ),
     ],
 ) -> fooResponse:
@@ -1060,7 +824,7 @@ async def bar(
     ],
 ) -> barResponse:
     def Passage(*, code: str) -> str:
-        desc = icd10pcs.loc[code, 'Long']
+        desc = icd10pcs.loc[code, 'desc']
         return (
             f"search_document: "
             f"The procedure is "
@@ -1068,7 +832,7 @@ async def bar(
         )
     
     def Query(*, code: str) -> str:
-        desc = icd10pcs.loc[code, 'Long']
+        desc = icd10pcs.loc[code, 'desc']
         return (
             f"search_query: "
             f"What equivalent procedure corresponds to this passage: "
@@ -1112,7 +876,7 @@ async def bar(
     
     for i in indices:
         code = icd10pcs.index[i]
-        desc = icd10pcs.loc[code, 'Long']
+        desc = icd10pcs.loc[code, 'desc']
         
         response.best.append(barResponseItem(
             pd=code,
@@ -1144,7 +908,7 @@ async def bing(
     icd10cm: auto.typing.Annotated[
         auto.pd.DataFrame,
         auto.fastapi.Depends(
-            CompleteICD10CM,
+            ICD10CM,
         ),
     ],
 ) -> bingResponse:
@@ -1237,7 +1001,7 @@ async def ping(
     ],
 ) -> pingResponse:
     def Passage(*, code: str) -> str:
-        desc = icd10pcs.loc[code, 'Long']
+        desc = icd10pcs.loc[code, 'desc']
         return (
             f"search_document: "
             f"The procedure is "
@@ -1288,7 +1052,7 @@ async def ping(
     
     for i in indices:
         code = icd10pcs.index[i]
-        desc = icd10pcs.loc[code, 'Long']
+        desc = icd10pcs.loc[code, 'desc']
         
         response.best.append(pingResponseItem(
             pd=code,

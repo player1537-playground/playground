@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 from ._auto import auto
+from ._config import config
 
 
 class LLM:
@@ -563,3 +564,1239 @@ class PROMPT:
         if _parser is not None:
             prompt.parser = _parser
         return prompt
+
+
+def __ICD10CM_a(
+    year: int,
+    *,
+    root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+
+    tmp_root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    tmp_name: str = '__ICD10CM.tmp',
+    tmp_path: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+
+    cache_root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    cache_name: str | auto.typing.Literal[...] = ...,
+    cache_names: dict[int, str] = {
+        2025: '_ICD10CM2025A.csv',
+        2024: '_ICD10CM2024A.csv',
+        2023: '_ICD10CM2023A.csv',
+        2022: '_ICD10CM2022A.csv',
+        2021: '_ICD10CM2021A.csv',
+        2020: '_ICD10CM2020A.csv',
+        2019: '_ICD10CM2019A.csv',
+        2018: '_ICD10CM2018A.csv',
+        2017: '_ICD10CM2017A.csv',
+    },
+    cache_path: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+
+    zip_root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    zip_name: str | auto.typing.Literal[...] = ...,
+    zip_names: dict[int, str] = {
+        2025: '__ICD10CM2025A.zip',
+        2024: '__ICD10CM2024A.zip',
+        2023: '__ICD10CM2023A.zip',
+        2022: '__ICD10CM2022A.zip',
+        2021: '__ICD10CM2021A.zip',
+        2020: '__ICD10CM2020A.zip',
+        2019: '__ICD10CM2019A.zip',
+        2018: '__ICD10CM2018A.zip',
+        2017: '__ICD10CM2017A.zip',
+    },
+    zip_path: auto.os.PathLike | auto.typing.Literal[...] = ...,
+    zip_href: str | auto.typing.Literal[...] = ...,
+    zip_hrefs: dict[int, str] = {
+        2025: 'https://www.cms.gov/files/zip/2025-code-descriptions-tabular-order.zip',
+        2024: 'https://ftp.cdc.gov/pub/Health_Statistics/NCHS/Publications/ICD10CM/2024-Update/icd10cm-Codes-Descriptions-April-2024.zip',
+        2023: 'https://www.cms.gov/files/zip/2023-code-descriptions-tabular-order-updated-01/11/2023.zip',
+        2022: 'https://www.cms.gov/files/zip/2022-code-descriptions-tabular-order-updated-02012022.zip',
+        2021: 'https://www.cms.gov/files/zip/2021-code-descriptions-tabular-order-updated-12162020.zip',
+        2020: 'https://www.cms.gov/medicare/coding/icd10/downloads/2020-icd-10-cm-codes.zip',
+        2019: 'https://www.cms.gov/medicare/coding/icd10/downloads/2019-icd-10-cm-code-descriptions.zip',
+        2018: 'https://www.cms.gov/medicare/coding/icd10/downloads/2018-icd-10-code-descriptions.zip',
+        2017: 'https://www.cms.gov/medicare/coding/icd10/downloads/2017-icd10-code-descriptions.zip',
+    },
+
+    txt_root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    txt_name: str | auto.typing.Literal[...] = ...,
+    txt_names: dict[int, str] = {
+        2025: 'icd10cm_codes_2025.txt',
+        2024: 'icd10cm-codes-April-2024.txt',
+        2023: 'icd10cm_codes_2023.txt',
+        2022: 'Code Descriptions/icd10cm_codes_2022.txt',
+        2021: '2021-code-descriptions-tabular-order/icd10cm_codes_2021.txt',
+        2020: '2020 Code Descriptions/icd10cm_codes_2020.txt',
+        2019: 'icd10cm_codes_2019.txt',
+        2018: 'icd10cm_codes_2018.txt',
+        2017: 'icd10cm_codes_2017.txt',
+    },
+    txt_path: auto.os.PathLike | auto.typing.Literal[...] = ...,
+) -> auto.pd.DataFrame:
+    if root is ...:
+        root = config.datadir
+
+    if cache_path is ...:
+        if cache_root is ...:
+            cache_root = root
+        if cache_name is ...:
+            cache_name = cache_names[year]
+        cache_path = cache_root / cache_name
+
+    if not cache_path.exists():
+        if tmp_path is ...:
+            if tmp_root is ...:
+                tmp_root = root
+            tmp_path = tmp_root / tmp_name
+
+        if zip_path is ...:
+            if zip_root is ...:
+                zip_root = root
+            if zip_name is ...:
+                zip_name = zip_names[year]
+            zip_path = zip_root / zip_name
+
+        if not zip_path.exists():
+            if zip_href is ...:
+                zip_href = zip_hrefs[year]
+
+            with auto.requests.request(
+                'GET',
+                zip_href,
+                stream=True,
+            ) as r:
+                r.raise_for_status()
+                with tmp_path.open('wb') as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+
+            tmp_path.rename(zip_path)
+        assert zip_path.exists()
+
+        if txt_path is ...:
+            if txt_root is ...:
+                txt_root = auto.zipfile.Path(zip_path)
+            if txt_name is ...:
+                txt_name = txt_names[year]
+            txt_path = txt_root / txt_name
+
+        if not txt_path.exists():
+            with auto.zipfile.ZipFile(zip_path) as arc:
+                auto.pprint.pp(arc.infolist())
+        assert txt_path.exists()
+
+        # with auto.mediocreatbest.Textarea():
+        #     with path.open('r') as f:
+        #         # lines = auto.more_itertools.take(100, f)
+        #         lines = auto.collections.deque(f, maxlen=100)
+        #         for line in lines:
+        #             print(line, end='')
+
+        #=> "Z949    Transplanted organ and tissue status, unspecified"
+        #=> "Z950    Presence of cardiac pacemaker"
+        #=> "Z951    Presence of aortocoronary bypass graft"
+        #=> "Z952    Presence of prosthetic heart valve"
+        #=> "Z953    Presence of xenogenic heart valve"
+        #=> "Z954    Presence of other heart-valve replacement"
+        #=> "Z955    Presence of coronary angioplasty implant and graft"
+        #=> "Z95810  Presence of automatic (implantable) cardiac defibrillator"
+        #=> "Z95811  Presence of heart assist device"
+        #=> "Z95812  Presence of fully implantable artificial heart"
+        #=> "Z95818  Presence of other cardiac implants and grafts"
+
+        df = []
+        with txt_path.open('r') as f:
+            for line in f:
+                code, desc = auto.re.split(r'\s+', line, maxsplit=1)
+                code = code.strip()
+                desc = desc.strip()
+                df.append((code, desc))
+
+        df = auto.pandas.DataFrame(
+            df,
+            columns=['dx10', 'desc'],
+        )
+        df.set_index([
+            'dx10',
+        ], inplace=True)
+        df.sort_index(inplace=True)
+
+        with tmp_path.open('w') as f:
+            df.to_csv(
+                f,
+                index=True,
+                header=True,
+                quoting=auto.csv.QUOTE_NONNUMERIC,
+            )
+
+        tmp_path.rename(cache_path)
+    assert cache_path.exists()
+
+    with cache_path.open('r') as f:
+        df = auto.pandas.read_csv(
+            f,
+            dtype=str,
+            na_filter=False,
+            quoting=auto.csv.QUOTE_NONNUMERIC,
+        )
+
+    df.set_index([
+        'dx10',
+    ], inplace=True)
+    df.sort_index(inplace=True)
+
+    return df
+
+
+@auto.functools.cache
+def __ICD10CM_b(
+    year: int,
+    *,
+    root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+
+    cache_root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    cache_name: str | auto.typing.Literal[...] = ...,
+    cache_names: dict[int, str] = {
+        2025: '_ICD10CM2025B.csv',
+        2024: '_ICD10CM2024B.csv',
+        2023: '_ICD10CM2023B.csv',
+        2022: '_ICD10CM2022B.csv',
+        2021: '_ICD10CM2021B.csv',
+        2020: '_ICD10CM2020B.csv',
+        2019: '_ICD10CM2019B.csv',
+        2018: '_ICD10CM2018B.csv',
+        2017: '_ICD10CM2017B.csv',
+    },
+    cache_path: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+
+    tmp_root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    tmp_name: str = '__ICD10CM.tmp',
+    tmp_path: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+
+    zip_root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    zip_name: str | auto.typing.Literal[...] = ...,
+    zip_names: dict[int, str] = {
+        2025: '__ICD10CM2025B.zip',
+        2024: '__ICD10CM2024B.zip',
+        2023: '__ICD10CM2023B.zip',
+        2022: '__ICD10CM2022B.zip',
+        2021: '__ICD10CM2021B.zip',
+        2020: '__ICD10CM2020B.zip',
+        2019: '__ICD10CM2019B.zip',
+        2018: '__ICD10CM2018B.zip',
+        2017: '__ICD10CM2017B.zip',
+    },
+    zip_path: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    zip_href: str | auto.typing.Literal[...] = ...,
+    zip_hrefs: dict[int, str] = {
+        2025: 'https://www.cms.gov/files/zip/2025-code-tables-tabular-and-index.zip',
+        2024: 'https://www.cms.gov/files/zip/2024-code-tables-tabular-and-index-updated-02/01/2024.zip',
+        2023: 'https://www.cms.gov/files/zip/2023-code-tables-tabular-and-index-updated-01/11/2023.zip',
+        2022: 'https://www.cms.gov/files/zip/2022-code-tables-tabular-and-index-updated-02012022.zip',
+        2021: 'https://www.cms.gov/files/zip/2021-code-tables-tabular-and-index-updated-12162020.zip',
+        2020: 'https://www.cms.gov/medicare/coding/icd10/downloads/2020-icd-10-cm-code-tables.zip',
+        2019: 'https://www.cms.gov/medicare/coding/icd10/downloads/2019-icd-10-cm-tables-and-index.zip',
+        2018: 'https://www.cms.gov/medicare/coding/icd10/downloads/2018-icd-10-table-and-index.zip',
+        2017: 'https://www.cms.gov/medicare/coding/icd10/downloads/2017-icd10-code-tables-index.zip',
+    },
+
+    xml_root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    xml_name: str | auto.typing.Literal[...] = ...,
+    xml_names: dict[int, str] = {
+        2025: 'icd10cm_tabular_2025.xml',
+        2024: 'icd10cm_tabular_2024.xml',
+        2023: 'icd10cm_tabular_2023.xml',
+        2022: 'Table and Index/icd10cm_tabular_2022.xml',
+        2021: '2021-code-tables-and-index/icd10cm_tabular_2021.xml',
+        2020: '2020 Table and Index/icd10cm_tabular_2020.xml',
+        2019: 'icd10cm_tabular_2019.xml',
+        2018: 'icd10cm_tabular_2018.xml',
+        2017: 'icd10cm_tabular_2017.xml',
+    },
+    xml_path: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+) -> auto.pd.DataFrame:
+    if root is ...:
+        root = config.datadir
+
+    if cache_path is ...:
+        if cache_root is ...:
+            cache_root = root
+        if cache_name is ...:
+            cache_name = cache_names[year]
+        cache_path = cache_root / cache_name
+
+    if not cache_path.exists():
+        if tmp_path is ...:
+            if tmp_root is ...:
+                tmp_root = root
+            tmp_path = tmp_root / tmp_name
+
+        if zip_path is ...:
+            if zip_root is ...:
+                zip_root = root
+            if zip_name is ...:
+                zip_name = zip_names[year]
+            zip_path = zip_root / zip_name
+
+        if not zip_path.exists():
+            if zip_href is ...:
+                zip_href = zip_hrefs[year]
+
+            with auto.requests.request(
+                'GET',
+                zip_href,
+                stream=True,
+            ) as r:
+                r.raise_for_status()
+                with open(tmp_path, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+
+            tmp_path.rename(zip_path)
+        assert zip_path.exists()
+
+        # with auto.zipfile.ZipFile(zip_path) as arc:
+        #     /auto.pprint.pp arc.infolist()
+
+        if xml_path is ...:
+            if xml_root is ...:
+                xml_root = auto.zipfile.Path(zip_path)
+            if xml_name is ...:
+                xml_name = xml_names[year]
+            xml_path = xml_root / xml_name
+
+        if not xml_path.exists():
+            with auto.zipfile.ZipFile(zip_path) as arc:
+                auto.pprint.pp(arc.infolist())
+        assert xml_path.exists()
+
+        with xml_path.open('r') as f:
+            soup = auto.bs4.BeautifulSoup(f, 'xml')
+
+
+        # <chapter>
+        #   <name>22</name>
+        #   <desc>Codes for special purposes (U00-U85)</desc>
+        #   <sectionIndex>
+        #     <sectionRef first="U00" last="U49" id="U00-U49">
+        #        Provisional assignment of new diseases of uncertain etiology or emergency use
+        #     </sectionRef>
+        #   </sectionIndex>
+        #   <section id="U00-U49">
+        #     <desc>Provisional assignment of new diseases of uncertain etiology or emergency use (U00-U49)</desc>
+        #     <diag>
+        #       <name>U07</name>
+        #       <desc>Emergency use of U07</desc>
+        #       <diag>
+        #         <name>U07.0</name>
+        #         <desc>Vaping-related disorder</desc>
+        #         <inclusionTerm>
+        #           <note>Dabbing related lung damage</note>
+        #           <note>Dabbing related lung injury</note>
+        #           <note>E-cigarette, or vaping, product use associated lung injury [EVALI]</note>
+        #           <note>Electronic cigarette related lung damage</note>
+        #           <note>Electronic cigarette related lung injury</note>
+        #         </inclusionTerm>
+        #         <useAdditionalCode>
+        #           <note>code to identify manifestations, such as:</note>
+        #           <note>abdominal pain (R10.84)</note>
+        #           <note>acute respiratory distress syndrome (J80)</note>
+        #           <note>diarrhea (R19.7)</note>
+        #           <note>drug-induced interstitial lung disorder (J70.4)</note>
+        #           <note>lipoid pneumonia (J69.1)</note>
+        #           <note>weight loss (R63.4)</note>
+        #         </useAdditionalCode>
+        #       </diag>
+        #       <diag>
+        #         <name>U07.1</name>
+        #         <desc>COVID-19</desc>
+        #         <useAdditionalCode>
+        #           <note>code to identify pneumonia or other manifestations, such as:</note>
+        #           <note>pneumonia due to COVID-19 (J12.82)</note>
+        #         </useAdditionalCode>
+        #         <useAdditionalCode>
+        #           <note>code, if applicable, for associated conditions such as:</note>
+        #           <note>COVID-19 associated coagulopathy (D68.8)</note>
+        #           <note>disseminated intravascular coagulation (D65)</note>
+        #           <note>hypercoagulable states (D68.69)</note>
+        #           <note>thrombophilia (D68.69)</note>
+        #         </useAdditionalCode>
+        #         <excludes2>
+        #           <note>coronavirus as the cause of diseases classified elsewhere (B97.2-)</note>
+        #           <note>pneumonia due to SARS-associated coronavirus (J12.81)</note>
+        #         </excludes2>
+        #       </diag>
+        #     </diag>
+        #     <diag>
+        #       <name>U09</name>
+        #       <desc>Post COVID-19 condition</desc>
+        #       <diag>
+        #         <name>U09.9</name>
+        #         <desc>Post COVID-19 condition, unspecified</desc>
+        #         <inclusionTerm>
+        #           <note>Post-acute sequela of COVID-19</note>
+        #         </inclusionTerm>
+        #         <codeFirst>
+        #           <note>the specific condition related to COVID-19 if known, such as:</note>
+        #           <note>chronic respiratory failure (J96.1-)</note>
+        #           <note>loss of smell (R43.8)</note>
+        #           <note>loss of taste (R43.8)</note>
+        #           <note>multisystem inflammatory syndrome (M35.81)</note>
+        #           <note>pulmonary embolism (I26.-)</note>
+        #           <note>pulmonary fibrosis (J84.10)</note>
+        #         </codeFirst>
+        #         <notes>
+        #           <note>This code enables establishment of a link with COVID-19.</note>
+        #           <note>This code is not to be used in cases that are still presenting with active COVID-19.  However, an exception is made in cases of re-infection with COVID-19, occurring with a condition related to prior COVID-19.</note>
+        #         </notes>
+        #       </diag>
+        #     </diag>
+        #   </section>
+        # </chapter>
+
+        # diags = []
+
+        tabular = soup.find_all('ICD10CM.tabular', recursive=False)
+        assert len(tabular) == 1, len(tabular)
+        tabular ,= tabular
+
+        chapters = tabular.find_all('chapter', recursive=False)
+        assert len(chapters) > 0, len(chapters)
+
+        df = []
+        for chapter in chapters:
+            chapter_name_ = chapter.find('name', recursive=False)
+            assert chapter_name_ is not None
+            chapter_name = chapter_name_.text
+
+            chapter_desc = chapter.find('desc', recursive=False)
+            assert chapter_desc is not None, chapter_name
+            chapter_desc = chapter_desc.text
+
+            sections = chapter.find_all('section', recursive=False)
+            assert len(sections) > 0, len(sections)
+
+            for section in sections:
+                section_desc_ = section.find('desc', recursive=False)
+                assert section_desc_ is not None, chapter_name
+                section_desc = section_desc_.text
+
+                def walk(diag, prev=[]):
+                    diag_name_ = diag.find('name', recursive=False)
+                    assert diag_name_ is not None, (chapter_name, chapter_desc, section_desc, prev)
+                    diag_name = diag_name_.text
+
+                    diag_desc_ = diag.find('desc', recursive=False)
+                    assert diag_desc_ is not None, (chapter_name, chapter_desc, section_desc, prev, diag_name)
+                    diag_desc = diag_desc_.text
+
+                    full_name = diag_name.replace('.', '')
+
+                    full_desc = ' > '.join([
+                        chapter_desc,
+                        section_desc,
+                    ] + [
+                        f'{prev_desc} ({prev_name})'
+                        for prev_name, prev_desc in prev
+                    ] + [
+                        f'{diag_desc} ({diag_name})',
+                    ])
+
+                    yield (full_name, full_desc)
+
+                    diags = diag.find_all('diag', recursive=False)
+                    for diag in diags:
+                        yield from walk(diag, prev=prev + [(diag_name, diag_desc)])
+
+                diags = section.find_all('diag', recursive=False)
+                # assert len(diags) > 0, (chapter_name, chapter_desc, section_desc, len(diags))
+
+                for diag in diags:
+                    for diag_name, diag_desc in walk(diag):
+                        df.append((diag_name, diag_desc))
+
+        df = auto.pd.DataFrame(
+            df,
+            columns=[
+                'dx10',
+                'desc',
+            ],
+        )
+        df.set_index([
+            'dx10',
+        ], inplace=True)
+        df.sort_index(inplace=True)
+
+        with tmp_path.open('w') as f:
+            df.to_csv(
+                f,
+                index=True,
+                header=True,
+                quoting=auto.csv.QUOTE_NONNUMERIC,
+            )
+
+        tmp_path.rename(cache_path)
+    assert cache_path.exists()
+
+    with cache_path.open('r') as f:
+        df = auto.pd.read_csv(
+            f,
+            dtype=str,
+            na_filter=False,
+            quoting=auto.csv.QUOTE_NONNUMERIC,
+        )
+
+    df.set_index([
+        'dx10',
+    ], inplace=True)
+    df.sort_index(inplace=True)
+
+    return df
+
+
+@auto.functools.cache
+def ICD10CM(
+    *,
+    strict: bool = False,
+
+    root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+
+    cache_root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    cache_name: str = 'ICD10CM.csv',
+    cache_path: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    cache_href: str | None = (
+        None  # recompute
+        # 'https://accona.eecs.utk.edu/ICD10CM.csv'  # bootstrap
+    ),
+
+    tmp_root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    tmp_path: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    tmp_name: str = '__ICD10CM.tmp',
+) -> auto.pd.DataFrame:
+    if root is ...:
+        root = config.datadir
+
+    if cache_path is ...:
+        if cache_root is ...:
+            cache_root = root
+        cache_path = cache_root / cache_name
+
+    if not cache_path.exists():
+        if tmp_path is ...:
+            if tmp_root is ...:
+                tmp_root = root
+            tmp_path = tmp_root / tmp_name
+
+        if cache_href is not None:
+            with auto.requests.request(
+                'GET',
+                cache_href,
+                stream=True,
+            ) as r:
+                r.raise_for_status()
+                with open(tmp_path, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+
+        else:
+            def scope():
+                dfs = []
+                dfs.append(__ICD10CM_a(2017))
+                dfs.append(__ICD10CM_a(2018))
+                dfs.append(__ICD10CM_a(2019))
+                dfs.append(__ICD10CM_a(2020))
+                dfs.append(__ICD10CM_a(2021))
+                dfs.append(__ICD10CM_a(2022))
+                dfs.append(__ICD10CM_a(2023))
+                dfs.append(__ICD10CM_a(2024))
+                dfs.append(__ICD10CM_a(2025))
+
+                df = auto.pd.concat(dfs)
+                df = df[~df.index.duplicated(keep='last')]
+                df.sort_index(inplace=True)
+
+                return df
+            icd10cmA = scope()
+
+            def scope():
+                dfs = []
+                dfs.append(__ICD10CM_b(2017))
+                dfs.append(__ICD10CM_b(2018))
+                dfs.append(__ICD10CM_b(2019))
+                dfs.append(__ICD10CM_b(2020))
+                dfs.append(__ICD10CM_b(2021))
+                dfs.append(__ICD10CM_b(2022))
+                dfs.append(__ICD10CM_b(2023))
+                dfs.append(__ICD10CM_b(2024))
+                dfs.append(__ICD10CM_b(2025))
+
+                df = auto.pd.concat(dfs)
+                df = df[~df.index.duplicated(keep='last')]
+                df.sort_index(inplace=True)
+
+                return df
+            icd10cmB = scope()
+
+            def scope():
+                names = icd10cmA.index.to_list()
+                names.sort(key=len)
+
+                df = []
+                for name in names:
+                    desc = icd10cmA.loc[name, 'desc']
+
+                    if name in icd10cmB.index:
+                        continue
+
+                    prev_descs = []
+                    __tested = []
+                    for i in range(len(name)-1, 1, -1):
+                        prev_name = name[:i]
+                        __tested.append(prev_name)
+
+                        if prev_name in icd10cmB.index:
+                            prev_desc = icd10cmB.loc[prev_name, 'desc']
+                            prev_descs.insert(0, prev_desc)
+                            break
+
+                        if len(prev_name) == 3:
+                            prev_code = f'{prev_name[:3]}'
+                        else:
+                            prev_code = f'{prev_name[:3]}.{prev_name[3:]}'
+
+                        if prev_name in icd10cmA.index:
+                            prev_desc = icd10cmA.loc[prev_name, 'desc']
+                            prev_descs.insert(0, f'{prev_desc} ({prev_code})')
+                            continue
+
+                    else:
+                        if strict:
+                            raise KeyError(f'{name!r}: {__tested!r}')
+
+                    if len(prev_descs) == 0 and not strict:
+                        continue
+
+                    assert len(prev_descs) > 0, name
+                    prev_desc = ' > '.join(prev_descs)
+
+                    if len(name) == 3:
+                        code = f'{name[:3]}'
+                    else:
+                        code = f'{name[:3]}.{name[3:]}'
+
+                    desc = f'{prev_desc} > {desc} ({code})'
+
+                    df.append((name, desc))
+
+                df = auto.pd.DataFrame(
+                    df,
+                    columns=[
+                        'dx10',
+                        'desc',
+                    ],
+                )
+                df.set_index([
+                    'dx10',
+                ], inplace=True)
+                df.sort_index(inplace=True)
+
+                return df
+            icd10cmC = scope()
+
+            def scope():
+                df = auto.pd.concat([
+                    icd10cmA,
+                    icd10cmB,
+                    icd10cmC,
+                ])
+                df = df[~df.index.duplicated(keep='last')]
+                df.sort_index(inplace=True)
+
+                return df
+            icd10cm = scope()
+
+            def scope():
+                df = []
+
+                prevs = {}
+                for dx10 in icd10cm.index:
+                    desc = icd10cm.loc[dx10, 'desc']
+
+                    for n in range(len(dx10)-1, 0, -1):
+                        prev = dx10[:n]
+
+                        if prev in icd10cm.index:
+                            continue
+
+                        prevs.setdefault(prev, set()).add(desc)
+
+                for prev, descs in prevs.items():
+                    desc = auto.os.path.commonprefix(sorted(descs))
+                    desc = desc[:desc.rfind(' > ')]
+
+                    df.append((prev, desc))
+
+                df = auto.pd.DataFrame(
+                    df,
+                    columns=[
+                        'dx10',
+                        'desc',
+                    ],
+                )
+                df.set_index([
+                    'dx10',
+                ], inplace=True)
+                df.sort_index(inplace=True)
+
+                return df
+            icd10cmD = scope()
+
+            def scope():
+                df = auto.pd.concat([
+                    icd10cm,
+                    icd10cmD,
+                ])
+                df = df[~df.index.duplicated(keep='last')]
+                df.sort_index(inplace=True)
+
+                return df
+            icd10cm = scope()
+
+            def scope():
+                dx10s = set(icd10cm.index.to_list())
+                assert len(dx10s) == len(icd10cm)
+
+                prevs = auto.pd.Series(
+                    None,
+                    index=icd10cm.index,
+                    dtype=str,
+                )
+
+                for dx10 in dx10s:
+                    if len(dx10) == 1:
+                        prevs[dx10] = ''
+                        continue
+
+                    for n in range(len(dx10)-1, 0, -1):
+                        prev_name = dx10[:n]
+
+                        if prev_name in dx10s:
+                            prevs[dx10] = prev_name
+                            break
+
+                    else:
+                        raise ValueError(f'No prev found for {dx10!r}')
+
+                return prevs
+            icd10cm['prev'] = scope()
+
+            def scope():
+                nexts = auto.pd.Series(
+                    [set() for _ in icd10cm.index],
+                    index=icd10cm.index,
+                )
+
+                for dx10 in icd10cm.index:
+                    prev = icd10cm.loc[dx10, 'prev']
+
+                    assert prev is not None, dx10
+                    if prev == '':
+                        continue
+
+                    nexts[prev].add(dx10)
+
+                for dx10, next in nexts.items():
+                    assert not any(' ' in s for s in next), (dx10, next)
+
+                    nexts[dx10] = ' '.join(sorted(next))
+
+                return nexts
+            icd10cm['nexts'] = scope()
+
+            def scope():
+                disps = auto.pd.Series(
+                    None,
+                    index=icd10cm.index,
+                    dtype=str,
+                )
+
+                for dx10 in icd10cm.index:
+                    if len(dx10) <= 3:
+                        disp = dx10
+                    else:
+                        disp = dx10[:3] + '.' + dx10[3:]
+
+                    disps[dx10] = disp
+
+                return disps
+            icd10cm['disp'] = scope()
+
+            with tmp_path.open('w') as f:
+                icd10cm.to_csv(
+                    f,
+                    index=True,
+                    header=True,
+                    quoting=auto.csv.QUOTE_NONNUMERIC,
+                )
+
+        assert tmp_path.exists()
+        tmp_path.rename(cache_path)
+    assert cache_path.exists()
+
+    with cache_path.open('r') as f:
+        icd10cm = auto.pd.read_csv(
+            f,
+            dtype=str,
+            na_filter=False,
+            quoting=auto.csv.QUOTE_NONNUMERIC,
+        )
+
+    icd10cm.set_index([
+        'dx10',
+    ], inplace=True)
+    icd10cm.sort_index(inplace=True)
+
+    return icd10cm
+
+
+#@title ICD10PCS
+def __ICD10PCS(
+    year: int,
+    *,
+    root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+
+    tmp_root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    tmp_path: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    tmp_name: str = '__ICD10PCS.tmp',
+
+    cache_root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    cache_name: str | auto.typing.Literal[...] = ...,
+    cache_names: dict[int, str] = {
+        2025: '_ICD10PCS2025.csv',
+        2024: '_ICD10PCS2024.csv',
+        2023: '_ICD10PCS2023.csv',
+        2022: '_ICD10PCS2022.csv',
+        2021: '_ICD10PCS2021.csv',
+        2020: '_ICD10PCS2020.csv',
+        2019: '_ICD10PCS2019.csv',
+        2018: '_ICD10PCS2018.csv',
+        2017: '_ICD10PCS2017.csv',
+    },
+    cache_path: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+
+    zip_root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    zip_path: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    zip_name: str | auto.typing.Literal[...] = ...,
+    zip_names: dict[int, str] = {
+        2025: '__ICD10PCS2025.zip',
+        2024: '__ICD10PCS2024.zip',
+        2023: '__ICD10PCS2023.zip',
+        2022: '__ICD10PCS2022.zip',
+        2021: '__ICD10PCS2021.zip',
+        2020: '__ICD10PCS2020.zip',
+        2019: '__ICD10PCS2019.zip',
+        2018: '__ICD10PCS2018.zip',
+        2017: '__ICD10PCS2017.zip',
+    },
+    zip_href: str | auto.typing.Literal[...] = ...,
+    zip_hrefs: dict[int, str] = {
+        2025: 'https://www.cms.gov/files/zip/2025-icd-10-pcs-code-tables-and-index-updated-07/09/2024.zip',
+        2024: 'https://www.cms.gov/files/zip/2024-icd-10-pcs-code-tables-and-index-updated-12/19/2023.zip',
+        2023: 'https://www.cms.gov/files/zip/2023-icd-10-pcs-code-tables-and-index-updated-01/11/2023.zip',
+        2022: 'https://www.cms.gov/files/zip/2022-icd-10-pcs-code-tables-and-index-updated-december-1-2021.zip',
+        2021: 'https://www.cms.gov/files/zip/2021-icd-10-pcs-code-tables-and-index-updated-december-1-2020.zip',
+        2020: 'https://www.cms.gov/medicare/coding/icd10/downloads/2020-icd-10-pcs-code-tables.zip',
+        2019: 'https://www.cms.gov/medicare/coding/icd10/downloads/2019-icd-10-pcs-tables-and-index.zip',
+        2018: 'https://www.cms.gov/medicare/coding/icd10/downloads/2018-icd-10-pcs-tables-and-index.zip',
+        2017: 'https://www.cms.gov/medicare/coding/icd10/downloads/2017-pcs-code-tables.zip',
+    },
+
+    xml_root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    xml_path: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    xml_name: str | auto.typing.Literal[...] = ...,
+    xml_names: dict[int, str] = {
+        2025: 'Zip File 2 2025 Code Tables and Index/icd10pcs_tables_2025.xml',
+        2024: 'icd10pcs_tables_2024.xml',
+        2023: 'icd10pcs_tables_2023.xml',
+        2022: '2 2022 Code Tables and Index/icd10pcs_tables_2022.xml',
+        2021: '2021 Code Tables and Index/icd10pcs_tables_2021.xml',
+        2020: 'PCS_2020/icd10pcs_tables_2020.xml',
+        2019: 'icd10pcs_tables_2019.xml',
+        2018: 'icd10pcs_tables_2018.xml',
+        2017: 'icd10pcs_tables_2017.xml',
+    },
+):
+    if root is ...:
+        root = config.datadir
+
+    if tmp_path is ...:
+        if tmp_root is ...:
+            tmp_root = root
+        tmp_path = tmp_root / tmp_name
+
+    if cache_path is ...:
+        if cache_root is ...:
+            cache_root = root
+        if cache_name is ...:
+            cache_name = cache_names[year]
+        cache_path = cache_root / cache_name
+
+    if not cache_path.exists():
+        if zip_path is ...:
+            if zip_root is ...:
+                zip_root = root
+            if zip_name is ...:
+                zip_name = zip_names[year]
+            zip_path = zip_root / zip_name
+
+        if not zip_path.exists():
+            if zip_href is ...:
+                zip_href = zip_hrefs[year]
+
+            with auto.requests.request(
+                'GET',
+                zip_href,
+                stream=True,
+            ) as r:
+                r.raise_for_status()
+
+                with tmp_path.open('wb') as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+
+            tmp_path.rename(zip_path)
+        assert zip_path.exists(), zip_path
+
+        if xml_path is ...:
+            if xml_root is ...:
+                xml_root = auto.zipfile.Path(zip_path)
+            if xml_name is ...:
+                xml_name = xml_names[year]
+            xml_path = xml_root / xml_name
+
+        if not xml_path.exists():
+            with auto.zipfile.ZipFile(zip_path, 'r') as arc:
+                raise ValueError(repr(arc.infolist()))
+
+        with xml_path.open('r') as f:
+            soup = auto.bs4.BeautifulSoup(f, 'xml')
+
+        soup ,= soup('ICD10PCS.tabular')
+
+        it = soup('pcsTable', recursive=False)
+
+        df = {}
+        for table in it:
+            it = table('axis', recursive=False)
+            assert len(it) == 3, len(it)
+
+            TABLE_POS = iter(auto.itertools.count(1))
+            table_data: dict[int, list] = {
+                pos: []
+                for pos in range(1, 3+1)
+            }
+
+            for table_axis in it:
+                table_pos = next(TABLE_POS)
+                assert table_axis['pos'] == str(table_pos), (table_axis['pos'], table_pos)
+
+                assert table_axis['values'] == '1', table_axis['values']
+
+                table_title ,= table_axis('title', recursive=False)
+                table_title_text = table_title.text
+                table_label ,= table_axis('label', recursive=False)
+
+                label_code = table_label['code']
+                label_text = table_label.text
+
+                table_data[table_pos].append(auto.types.SimpleNamespace(
+                    text=f'{table_title_text}: {label_text}',
+                    code=label_code,
+                ))
+
+            table_npos = next(TABLE_POS)
+            assert table_npos == 3+1, table_npos
+
+            assert all(len(v) > 0 for v in table_data.values()), table_data
+
+            it = table('pcsRow', recursive=False)
+            assert len(it) > 0, len(it)
+
+            for row in it:
+                it = row('axis', recursive=False)
+                assert len(it) == 4, len(it)
+
+                ROW_POS = iter(auto.itertools.count(table_npos))
+                row_data: dict[int, list] = {
+                    pos: []
+                    for pos in range(4, 7+1)
+                }
+
+                for row_axis in it:
+                    row_pos = next(ROW_POS)
+                    assert row_axis['pos'] == str(row_pos), (row_axis['pos'], row_pos)
+
+                    row_title ,= row_axis('title', recursive=False)
+                    row_title_text = row_title.text
+
+                    it = row_axis('label', recursive=False)
+                    assert len(it) > 0, len(it)
+
+                    for row_label in it:
+                        row_code = row_label['code']
+                        row_text = row_label.text
+
+                        row_data[row_pos].append(auto.types.SimpleNamespace(
+                            text=f'{row_title_text}: {row_text}',
+                            code=row_code,
+                        ))
+
+                row_npos = next(ROW_POS)
+                assert row_npos == 7+1, row_npos
+
+                for n in range(1, 7+1):
+                    it = auto.itertools.product(*[
+                        (
+                            table_data[i]
+                        ) if 1 <= i <= 3 else (
+                            row_data[i]
+                        )
+                        for i in range(1, n+1)
+                    ])
+
+                    for parts in it:
+                        code = ''.join(part.code for part in parts)
+                        text = '; '.join(part.text for part in parts)
+
+                        df[code] = text
+
+        df = auto.pd.DataFrame(
+            df.items(),
+            columns=[
+                'pd10',
+                'desc',
+            ],
+        )
+        df.set_index([
+            'pd10',
+        ], inplace=True)
+        df.sort_index(inplace=True)
+
+        with tmp_path.open('w') as f:
+            df.to_csv(
+                f,
+                index=True,
+                header=True,
+                quoting=auto.csv.QUOTE_NONNUMERIC,
+            )
+        tmp_path.rename(cache_path)
+    assert cache_path.exists()
+
+    with cache_path.open('r') as f:
+        df = auto.pd.read_csv(
+            f,
+            dtype=str,
+            na_filter=False,
+            quoting=auto.csv.QUOTE_NONNUMERIC,
+        )
+
+    df.set_index([
+        'pd10',
+    ], inplace=True)
+    df.sort_index(inplace=True)
+
+    return df
+
+
+@auto.functools.cache
+def ICD10PCS(
+    *,
+    root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+
+    cache_root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    cache_name: str = 'ICD10PCS.csv',
+    cache_path: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    cache_href: str | None = (
+        None  # recompute
+        # 'https://accona.eecs.utk.edu/ICD10PCS.csv'  # bootstrap
+    ),
+
+    tmp_root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    tmp_path: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    tmp_name: str = '__ICD10PCS.tmp',
+):
+    if root is ...:
+        root = config.datadir
+
+    if cache_path is ...:
+        if cache_root is ...:
+            cache_root = root
+        cache_path = cache_root / cache_name
+
+    if not cache_path.exists():
+        if tmp_path is ...:
+            if tmp_root is ...:
+                tmp_root = root
+            tmp_path = tmp_root / tmp_name
+
+        if cache_href is not None:
+            with auto.requests.request(
+                'GET',
+                cache_href,
+                stream=True,
+            ) as r:
+                r.raise_for_status()
+                with tmp_path.open('wb') as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+
+        else:
+            def scope():
+                dfs = []
+                dfs.append(__ICD10PCS(2017))
+                dfs.append(__ICD10PCS(2018))
+                dfs.append(__ICD10PCS(2019))
+                dfs.append(__ICD10PCS(2020))
+                dfs.append(__ICD10PCS(2021))
+                dfs.append(__ICD10PCS(2022))
+                dfs.append(__ICD10PCS(2023))
+                dfs.append(__ICD10PCS(2024))
+                dfs.append(__ICD10PCS(2025))
+
+                df = auto.pd.concat(dfs)
+                df = df[~df.index.duplicated(keep='last')]
+                df.sort_index(inplace=True)
+
+                return df
+            icd10pcs = scope()
+
+            def scope():
+                prevs = {}
+                for pd10 in icd10pcs.index:
+                    desc = icd10pcs.loc[pd10, 'desc']
+
+                    for n in range(len(pd10)-1, 0, -1):
+                        prev = pd10[:n]
+                        if prev in icd10pcs.index:
+                            continue
+
+                        prevs.setdefault(prev, set()).add(desc)
+
+                df = []
+                for prev, descs in prevs.items():
+                    desc = auto.os.path.commonprefix(sorted(descs))
+                    desc = desc[:desc.rfind('; ')]
+
+                    df.append((prev, desc))
+
+                df = auto.pd.DataFrame(
+                    df,
+                    columns=[
+                        'pd10',
+                        'desc',
+                    ],
+                )
+                df.set_index([
+                    'pd10',
+                ], inplace=True)
+                df.sort_index(inplace=True)
+
+                return df
+            icd10pcsA = scope()
+
+            def scope():
+                df = auto.pd.concat([
+                    icd10pcs,
+                    icd10pcsA,
+                ])
+                df = df[~df.index.duplicated(keep='last')]
+                df.sort_index(inplace=True)
+
+                return df
+            icd10pcs = scope()
+
+            def scope():
+                prevs = auto.pd.Series(
+                    None,
+                    index=icd10pcs.index,
+                    dtype=str,
+                )
+
+                for pd10 in icd10pcs.index:
+                    if len(pd10) == 1:
+                        prevs[pd10] = ''
+                        continue
+
+                    __tested = []
+                    for n in range(len(pd10)-1, 0, -1):
+                        short = pd10[:n]
+
+                        __tested.append(short)
+                        if short in icd10pcs.index:
+                            prevs[pd10] = short
+                            break
+
+                    else:
+                        raise ValueError(f'No previous found for {pd10!r}: ({__tested!r})')
+
+                return prevs
+            icd10pcs['prev'] = scope()
+
+            def scope():
+                nexts = auto.pd.Series(
+                    [set() for _ in icd10pcs.index],
+                    index=icd10pcs.index,
+                )
+
+                for pd10, prev in icd10pcs['prev'].items():
+                    if prev == '':
+                        continue
+
+                    nexts[prev].add(pd10)
+
+                for pd10, nexts_ in nexts.items():
+                    nexts[pd10] = ' '.join(nexts_)
+
+                return nexts
+            icd10pcs['nexts'] = scope()
+
+            def scope():
+                disps = auto.pd.Series(
+                    None,
+                    index=icd10pcs.index,
+                    dtype=str,
+                )
+
+                for pd10 in icd10pcs.index:
+                    disp = pd10
+
+                    disps[pd10] = disp
+
+                return disps
+            icd10pcs['disp'] = scope()
+
+            with tmp_path.open('w') as f:
+                icd10pcs.to_csv(
+                    f,
+                    index=True,
+                    header=True,
+                    quoting=auto.csv.QUOTE_NONNUMERIC,
+                )
+
+        assert tmp_path.exists()
+        tmp_path.rename(cache_path)
+    assert cache_path.exists()
+
+    with cache_path.open('r') as f:
+        icd10pcs = auto.pd.read_csv(
+            f,
+            dtype=str,
+            na_filter=False,
+            quoting=auto.csv.QUOTE_NONNUMERIC,
+        )
+
+    icd10pcs.set_index([
+        'pd10',
+    ], inplace=True)
+    icd10pcs.sort_index(inplace=True)
+
+    return icd10pcs

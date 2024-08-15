@@ -8,3 +8,5 @@ pandas
 more_itertools
 geopandas
 matplotlib
+beautifulsoup4
+lxml
