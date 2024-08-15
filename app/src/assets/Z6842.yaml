@@ -1,0 +1,72 @@
+identity: "Z68.42: History of being a victim of other forms of organized violence (includes exploitation)"
+
+magazines:
+- identity: "Poverty rate"
+  properties:
+  - identity: "P07FDFE2: Poverty Level Percent (2 Decimal Places With Decimal Point), Rounded"
+  - identity: "P074936D: Proportion Of Population Below Poverty Level"
+  - identity: "P04529F4: Population Where Income Is Below Poverty Level"
+  - identity: "P071CB3E: Percent of Population At or Below Poverty Threshold"
+
+- identity: "Unemployment rate"
+  properties:
+  - identity: "P0204018: Proportion Of Population 16+ Unemployed"
+  - identity: "P031BE1E: Total Unemployed Male Population 16 And Over"
+  - identity: "P04E1477: Total Female Population 16 And Over - Unemployed"
+  - identity: "P0D8F40D: Hail - Expected Annual Loss Rate - Population"
+
+- identity: "Crime rate"
+  properties:
+  - identity: "P0B3AF65: Number of Jails/Prisons Per 1000 People"
+  - identity: "P00F3074: Number of Active Other Law Enforcement Orgs Per 1000 People"
+  - identity: "P08E3D49: Number of Active Law Enforcement Organizations (All Kinds) per 1000 People"
+  - identity: "P07ABD58: Number of Law Enforcement Organizations (All Kinds) Per 1000 People"
+
+- identity: "Mental health services availability"
+  properties:
+  - identity: "P06F16F0: Mental Health & Abuse Care Facilities"
+  - identity: "P00BDB29: Number of Active Mental Health And Abuse Care Facilities Per 1000 People"
+  - identity: "P0686A7C: Number of Active Mental Health And Abuse Care Facilities"
+  - identity: "P0AAE342: Number of Mental Health And Abuse Care Facilities Per 1000 People"
+
+- identity: "Education level"
+  properties:
+  - identity: "P0F3A328: Number of High Schools (Highest Grade > 9)"
+  - identity: "P037A4B0: Adult (25+ Years) Female Population With Only 11th Grade Education"
+  - identity: "P0D3A301: Proportion With Less Than High School Diploma"
+  - identity: "P0FB0DD9: Adult (25+ Years) Female Population With Only 10th Grade Education"
+
+- identity: "Language spoken at home"
+  properties:
+  - identity: "P08CC50F: Total 65 Years And Over That Speak Other Languages"
+  - identity: "P0001C82: Total 65 Years And Over That Speak Other Languages And English Not Well"
+  - identity: "P008702F: Total 65 Years And Over That Speak Other Indo-European Language"
+  - identity: "P06612E1: Total 65 Years And Over That Speak Indo-European Language And English Not Well"
+
+- identity: "Food insecurity rate"
+  properties:
+  - identity: "P01FDD41: Population with Low Food Access"
+  - identity: "P02AA73A: Social Vulnerability And Community Resilience Adjusted Expected Annual Loss Rate - National Percentile - Composite"
+  - identity: "P01DA57D: Community Resilience - Value"
+  - identity: "P0428954: Percent of Population with Low-Income and Low-Access (>1/2 mile) to Supermarket"
+
+- identity: "Homeownership rate"
+  properties:
+  - identity: "P05DE7EF: Owner-Occupied Housing Units with Multiple Home Equity Loans"
+  - identity: "P0AAAF7C: Number of Home Health Services Per Square Miles"
+  - identity: "P0071F9D: Owner-Occupied Housing Units With A Mortgage, Contract To Purchase, Or Similar Debt"
+  - identity: "P02774FF: Number of Home Health Services Per 1000 People"
+
+- identity: "Community cohesion"
+  properties:
+  - identity: "P01DA57D: Community Resilience - Value"
+  - identity: "P0451E0D: Community Resilience - Score"
+  - identity: "P0E86B2A: Community Resilience - State Percentile"
+  - identity: "P0A0F76E: Civic/Social Organizations"
+
+- identity: "Law enforcement presence"
+  properties:
+  - identity: "P08E3D49: Number of Active Law Enforcement Organizations (All Kinds) per 1000 People"
+  - identity: "P0E13232: Number of Active Law Enforcement Organizations (All Kinds)"
+  - identity: "P068D650: Number of Active Law Enforcement Organizations per Square Miles"
+  - identity: "P0A92184: Number of Law Enforcement Organizations (All Kinds) with Employees"

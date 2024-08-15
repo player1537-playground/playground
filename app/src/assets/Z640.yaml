@@ -1,0 +1,72 @@
+identity: "Z640: Problems related to unwanted pregnancy"
+
+magazines:
+- identity: "Poverty Rate"
+  properties:
+  - identity: "P07FDFE2: Poverty Level Percent (2 Decimal Places With Decimal Point), Rounded"
+  - identity: "P074936D: Proportion Of Population Below Poverty Level"
+  - identity: "P04529F4: Population Where Income Is Below Poverty Level"
+  - identity: "P071CB3E: Percent of Population At or Below Poverty Threshold"
+
+- identity: "Unemployment Rate"
+  properties:
+  - identity: "P0204018: Proportion Of Population 16+ Unemployed"
+  - identity: "P031BE1E: Total Unemployed Male Population 16 And Over"
+  - identity: "P04E1477: Total Female Population 16 And Over - Unemployed"
+  - identity: "P0D8F40D: Hail - Expected Annual Loss Rate - Population"
+
+- identity: "Education Level"
+  properties:
+  - identity: "P0F3A328: Number of High Schools (Highest Grade > 9)"
+  - identity: "P037A4B0: Adult (25+ Years) Female Population With Only 11th Grade Education"
+  - identity: "P0D3A301: Proportion With Less Than High School Diploma"
+  - identity: "P0FB0DD9: Adult (25+ Years) Female Population With Only 10th Grade Education"
+
+- identity: "Access to Healthcare"
+  properties:
+  - identity: "P0C8F522: Is Low-Access (>1 mile) to Supermarket"
+  - identity: "P0FF2693: Is Low-Access (>1/2 mile) to Supermarket"
+  - identity: "P0404619: Population with Low-Access (>1 mile) to Supermarket"
+  - identity: "P04AE5E8: Population with Low-Access (>1/2 mile) to Supermarket"
+
+- identity: "Food Insecurity"
+  properties:
+  - identity: "P01FDD41: Population with Low Food Access"
+  - identity: "P01DA57D: Community Resilience - Value"
+  - identity: "P003E05A: Drought - Exposure - Agriculture Value"
+  - identity: "P015B574: Total Households - Poverty Status"
+
+- identity: "Homelessness Rate"
+  properties:
+  - identity: "P045B6DB: Number of Temporary Shelters Per Square Miles"
+  - identity: "P0FBDB38: Number of Temporary Shelters Per 1000 People"
+  - identity: "P0E1A0DD: Mental Health & Abuse Care Facilities Per Square Miles"
+  - identity: "P0D920B4: Number of Temporary Shelters per Square Miles with Employees"
+
+- identity: "Mental Health Services Availability"
+  properties:
+  - identity: "P06F16F0: Mental Health & Abuse Care Facilities"
+  - identity: "P00BDB29: Number of Active Mental Health And Abuse Care Facilities Per 1000 People"
+  - identity: "P0686A7C: Number of Active Mental Health And Abuse Care Facilities"
+  - identity: "P0AAE342: Number of Mental Health And Abuse Care Facilities Per 1000 People"
+
+- identity: "Domestic Violence Rate"
+  properties:
+  - identity: "P0E1A0DD: Mental Health & Abuse Care Facilities Per Square Miles"
+  - identity: "P06F16F0: Mental Health & Abuse Care Facilities"
+  - identity: "P0AAE342: Number of Mental Health And Abuse Care Facilities Per 1000 People"
+  - identity: "P06363E8: Number of Mental Health And Abuse Care Facilities with Employees"
+
+- identity: "Lack of Affordable Housing"
+  properties:
+  - identity: "P087BCE1: Is Low-Income"
+  - identity: "P0687408: Owner-Occupied Housing Units Without A Mortgage"
+  - identity: "P0BC4B5F: Total Renter-Occupied Housing Units With Household Income Less Than $10,000 - Less Than 20 Percent"
+  - identity: "P018CAA4: Owner-Occupied Housing Units With No Second Mortgage And No Home Equity Loan"
+
+- identity: "Transportation Access"
+  properties:
+  - identity: "P0C1D303: Transit Stops Per 1000 People"
+  - identity: "P0D58E7F: Transit Stops Per Square Mile"
+  - identity: "P0B9F84F: Is Low-Access (> 1/2 mile) to Supermarket and No Vehicle for \u2265100 households"
+  - identity: "P0C8F522: Is Low-Access (>1 mile) to Supermarket"

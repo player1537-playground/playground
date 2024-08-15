@@ -1,0 +1,86 @@
+identity: "Z560: Unemployment, unspecified"
+
+magazines:
+- identity: "Median household income"
+  properties:
+  - identity: "P0D61060: Median Household Income"
+  - identity: "P0525D3D: Median Household Income"
+  - identity: "P04F7D2E: Median Family Income"
+  - identity: "P056137B: Median Household Income, Householder Of Some Other Race"
+
+- identity: "Unemployment rate"
+  properties:
+  - identity: "P0204018: Proportion Of Population 16+ Unemployed"
+  - identity: "P031BE1E: Total Unemployed Male Population 16 And Over"
+  - identity: "P04E1477: Total Female Population 16 And Over - Unemployed"
+  - identity: "P0D8F40D: Hail - Expected Annual Loss Rate - Population"
+
+- identity: "Percentage of population living below the poverty line"
+  properties:
+  - identity: "P074936D: Proportion Of Population Below Poverty Level"
+  - identity: "P071CB3E: Percent of Population At or Below Poverty Threshold"
+  - identity: "P04529F4: Population Where Income Is Below Poverty Level"
+  - identity: "P0F1189F: Population 75 And Over Where Income Is Below Poverty Level"
+
+- identity: "High school graduation rate"
+  properties:
+  - identity: "P0F3A328: Number of High Schools (Highest Grade > 9)"
+  - identity: "P0FF22E3: Proportion With High School Diploma And/Or Some College"
+  - identity: "P0CC5246: Total Male High School Graduate (Includes Equivalency)"
+  - identity: "P078BC5F: Total Female High School Graduate (Includes Equivalency)"
+
+- identity: "Percentage of population with a bachelor's degree or higher"
+  properties:
+  - identity: "P097BBE6: Proportion With Bachelor'S Degree Or Higher"
+  - identity: "P0FF22E3: Proportion With High School Diploma And/Or Some College"
+  - identity: "P0D3A301: Proportion With Less Than High School Diploma"
+  - identity: "P0442A0C: Total Male Population 25 Years And Over - Bachelor'S Degree"
+
+- identity: "Number of jobs available per 1000 residents"
+  properties:
+  - identity: "P07EAD7E: Number of Home Health Services with Employees Per 1000 People"
+  - identity: "P02835F1: Number of Libraries/Archives with Employees Per 1000 People"
+  - identity: "P051A124: Number of All Physicians with Employees Per 1000 People"
+  - identity: "P0FBB77E: Number of Nursing And Residential Care Facilities with Employees Per 1000 People"
+
+- identity: "Percentage of population with a disability"
+  properties:
+  - identity: "P01AE2DA: Adults With Any Disability"
+  - identity: "P0D1F5AE: Number of Elderly and Disabled Person Services with Employees per 1000 People"
+  - identity: "P0204018: Proportion Of Population 16+ Unemployed"
+  - identity: "P0DD5011: Number of Elderly/Disabled Person Services Per 1000 People"
+
+- identity: "Percentage of population aged 16-64 not in the labor force"
+  properties:
+  - identity: "P05F6D13: Proportion Of Population 70 Years Of Age And Older"
+  - identity: "P014D672: Proportion Of Population Under 18 Years Of Age"
+  - identity: "P0204018: Proportion Of Population 16+ Unemployed"
+  - identity: "P0B9B22C: Proportion Of Population 30-39 Years Of Age"
+
+- identity: "Crime rate"
+  properties:
+  - identity: "P0B3AF65: Number of Jails/Prisons Per 1000 People"
+  - identity: "P00F3074: Number of Active Other Law Enforcement Orgs Per 1000 People"
+  - identity: "P08E3D49: Number of Active Law Enforcement Organizations (All Kinds) per 1000 People"
+  - identity: "P07ABD58: Number of Law Enforcement Organizations (All Kinds) Per 1000 People"
+
+- identity: "Access to public transportation"
+  properties:
+  - identity: "P0C1D303: Transit Stops Per 1000 People"
+  - identity: "P0D58E7F: Transit Stops Per Square Mile"
+  - identity: "P0B9F84F: Is Low-Access (> 1/2 mile) to Supermarket and No Vehicle for \u2265100 households"
+  - identity: "P0C8F522: Is Low-Access (>1 mile) to Supermarket"
+
+- identity: "Food insecurity rate"
+  properties:
+  - identity: "P01FDD41: Population with Low Food Access"
+  - identity: "P02AA73A: Social Vulnerability And Community Resilience Adjusted Expected Annual Loss Rate - National Percentile - Composite"
+  - identity: "P01DA57D: Community Resilience - Value"
+  - identity: "P0428954: Percent of Population with Low-Income and Low-Access (>1/2 mile) to Supermarket"
+
+- identity: "Percentage of population with a language other than English spoken at home"
+  properties:
+  - identity: "P090D9A0: Total Population 18-64 Years Old That Speak Only English"
+  - identity: "P0001C82: Total 65 Years And Over That Speak Other Languages And English Not Well"
+  - identity: "P0391A0C: Total 65 Years And Over That Speak Only English"
+  - identity: "P004D851: Total 65 Years And Over That Speak Other Languages And English Not At All"

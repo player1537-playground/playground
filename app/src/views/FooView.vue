@@ -1,5 +1,19 @@
 <template>
   <v-container fluid fill-height>
+    <v-app-bar app color="primary">
+      <template v-slot:prepend>
+        <v-img
+          :src="logo_white"
+          class="header-logo mx-4"
+          height="32"
+          width="128"
+        ></v-img>
+      </template>
+
+      <v-toolbar-title>Scribe</v-toolbar-title>
+    </v-app-bar>
+    <v-spacer></v-spacer>
+    
     <v-row>
       <v-col cols=12>
         <h1>Page 1: Recommend Codes given Visit Summary</h1>
@@ -46,6 +60,7 @@
                 <v-list-item
                   v-for="(match, index) in best"
                   :key="index"
+                  style="margin-bottom: 2rem"
                 >
                   <v-list-item-title>
                     {{ match.code }}: {{ match.desc }}
@@ -91,6 +106,7 @@
 
 <script>
 import { defineComponent } from 'vue';
+import logo_white from '@/assets/logo_white.svg';
 
 const PASSAGES = [];
 PASSAGES.push(`The patient presented for a follow-up visit after being diagnosed with rheumatoid arthritis and arthropathic psoriasis. They also have a history of malignant neoplasms, including a left kidney tumor and a left ureter tumor, as well as chronic kidney disease stage 3. The patient is currently being treated for a bacterial infection and has a MRSA infection. Additionally, they have an infection and inflammatory reaction due to a cardiac device, which is being monitored. The patient's overall health is compromised due to their complex medical conditions, and they require ongoing management and treatment to prevent complications.`);
@@ -107,12 +123,19 @@ export default defineComponent({
   name: 'FooView',
 
   data() {
+    let text = PASSAGES[0];
+
+    if (this.$route.query.text) {
+      text = this.$route.query.text;
+    }
+
     return {
       passages: PASSAGES,
-      text: PASSAGES[0],
+      text,
       codes: [],
       isInRequest: false,
       best: [],
+      logo_white,
     };
   },
 

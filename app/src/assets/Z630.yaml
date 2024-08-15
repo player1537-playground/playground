@@ -1,0 +1,86 @@
+identity: "Z630: Problems in relationship with spouse or partner"
+
+magazines:
+- identity: "Poverty Rate"
+  properties:
+  - identity: "P07FDFE2: Poverty Level Percent (2 Decimal Places With Decimal Point), Rounded"
+  - identity: "P074936D: Proportion Of Population Below Poverty Level"
+  - identity: "P04529F4: Population Where Income Is Below Poverty Level"
+  - identity: "P071CB3E: Percent of Population At or Below Poverty Threshold"
+
+- identity: "Unemployment Rate"
+  properties:
+  - identity: "P0204018: Proportion Of Population 16+ Unemployed"
+  - identity: "P031BE1E: Total Unemployed Male Population 16 And Over"
+  - identity: "P04E1477: Total Female Population 16 And Over - Unemployed"
+  - identity: "P0D8F40D: Hail - Expected Annual Loss Rate - Population"
+
+- identity: "Median Household Income"
+  properties:
+  - identity: "P0D61060: Median Household Income"
+  - identity: "P0525D3D: Median Household Income"
+  - identity: "P04F7D2E: Median Family Income"
+  - identity: "P056137B: Median Household Income, Householder Of Some Other Race"
+
+- identity: "Education Level"
+  properties:
+  - identity: "P0F3A328: Number of High Schools (Highest Grade > 9)"
+  - identity: "P037A4B0: Adult (25+ Years) Female Population With Only 11th Grade Education"
+  - identity: "P0D3A301: Proportion With Less Than High School Diploma"
+  - identity: "P0FB0DD9: Adult (25+ Years) Female Population With Only 10th Grade Education"
+
+- identity: "Home Ownership Rate"
+  properties:
+  - identity: "P0071F9D: Owner-Occupied Housing Units With A Mortgage, Contract To Purchase, Or Similar Debt"
+  - identity: "P05DE7EF: Owner-Occupied Housing Units with Multiple Home Equity Loans"
+  - identity: "P03FF7BB: Total Owner-Occupied Units Less Than $10,000"
+  - identity: "P003D4C7: Total Owner-Occupied Units $2,000,000 Or More"
+
+- identity: "Average Commute Time"
+  properties:
+  - identity: "P0BDB630: Sum Of Average Daily Traffic Counts"
+  - identity: "P0FB5BA0: Highest Average Daily Traffic Count"
+  - identity: "P0C75168: Mean Of Average Daily Traffic Counts"
+  - identity: "P0C0A4F2: Sum Of Average Daily Highway Traffic Counts"
+
+- identity: "Crime Rate"
+  properties:
+  - identity: "P0B3AF65: Number of Jails/Prisons Per 1000 People"
+  - identity: "P00F3074: Number of Active Other Law Enforcement Orgs Per 1000 People"
+  - identity: "P08E3D49: Number of Active Law Enforcement Organizations (All Kinds) per 1000 People"
+  - identity: "P07ABD58: Number of Law Enforcement Organizations (All Kinds) Per 1000 People"
+
+- identity: "Mental Health Services Availability"
+  properties:
+  - identity: "P06F16F0: Mental Health & Abuse Care Facilities"
+  - identity: "P00BDB29: Number of Active Mental Health And Abuse Care Facilities Per 1000 People"
+  - identity: "P0686A7C: Number of Active Mental Health And Abuse Care Facilities"
+  - identity: "P0AAE342: Number of Mental Health And Abuse Care Facilities Per 1000 People"
+
+- identity: "Food Insecurity Rate"
+  properties:
+  - identity: "P01FDD41: Population with Low Food Access"
+  - identity: "P02AA73A: Social Vulnerability And Community Resilience Adjusted Expected Annual Loss Rate - National Percentile - Composite"
+  - identity: "P01DA57D: Community Resilience - Value"
+  - identity: "P0428954: Percent of Population with Low-Income and Low-Access (>1/2 mile) to Supermarket"
+
+- identity: "Access to Public Transportation"
+  properties:
+  - identity: "P0C1D303: Transit Stops Per 1000 People"
+  - identity: "P0D58E7F: Transit Stops Per Square Mile"
+  - identity: "P0B9F84F: Is Low-Access (> 1/2 mile) to Supermarket and No Vehicle for \u2265100 households"
+  - identity: "P0C8F522: Is Low-Access (>1 mile) to Supermarket"
+
+- identity: "Proximity to Public Parks"
+  properties:
+  - identity: "P062EBCA: Has 1+ Open Parks"
+  - identity: "P09C77F4: Total Number Of Open Parks In The Census Tract"
+  # - identity: "P07609C8: Number of Open Parks (Capped at 3)"
+  # - identity: "P0531DE2: Number of Open Parks (Capped at 5)"
+
+- identity: "Marriage and Divorce Rate"
+  properties:
+  - identity: "P013E359: Total Married Couples With Income Below Poverty Level"
+  - identity: "P00EA007: Total Married Couples With Householder 65 And Over With Income Below Poverty Level"
+  - identity: "P06A2211: Total Married Couples With Householder 65 And Over With Income Above Poverty Level"
+  - identity: "P07B85F6: Total Married Couples With Income Above Poverty Level"

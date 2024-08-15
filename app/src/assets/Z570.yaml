@@ -1,0 +1,72 @@
+identity: "Z570: Occupational exposure to noise"
+
+magazines:
+- identity: "Unemployment Rate"
+  properties:
+  - identity: "P0204018: Proportion Of Population 16+ Unemployed"
+  - identity: "P031BE1E: Total Unemployed Male Population 16 And Over"
+  - identity: "P04E1477: Total Female Population 16 And Over - Unemployed"
+  - identity: "P0D8F40D: Hail - Expected Annual Loss Rate - Population"
+
+- identity: "Median Income"
+  properties:
+  - identity: "P0525D3D: Median Household Income"
+  - identity: "P0D61060: Median Household Income"
+  - identity: "P04F7D2E: Median Family Income"
+  - identity: "P04B2472: Median Non-Family Income"
+
+- identity: "Educational Attainment"
+  properties:
+  - identity: "P0FF22E3: Proportion With High School Diploma And/Or Some College"
+  - identity: "P0046C04: Adult (25+ Years) Male Population With Only 8th Grade Education"
+  - identity: "P0FC6FD5: Adult (25+ Years) Male Population With Only 10th Grade Education"
+  - identity: "P09BB22B: Adult (25+ Years) Male Population With Only 4th Grade Education"
+
+- identity: "Language Spoken at Home"
+  properties:
+  - identity: "P08CC50F: Total 65 Years And Over That Speak Other Languages"
+  - identity: "P0001C82: Total 65 Years And Over That Speak Other Languages And English Not Well"
+  - identity: "P008702F: Total 65 Years And Over That Speak Other Indo-European Language"
+  - identity: "P06612E1: Total 65 Years And Over That Speak Indo-European Language And English Not Well"
+
+- identity: "Percentage of Population Living Below Poverty Level"
+  properties:
+  - identity: "P074936D: Proportion Of Population Below Poverty Level"
+  - identity: "P071CB3E: Percent of Population At or Below Poverty Threshold"
+  - identity: "P04529F4: Population Where Income Is Below Poverty Level"
+  - identity: "P0F1189F: Population 75 And Over Where Income Is Below Poverty Level"
+
+- identity: "Access to Healthcare"
+  properties:
+  - identity: "P0C8F522: Is Low-Access (>1 mile) to Supermarket"
+  - identity: "P0FF2693: Is Low-Access (>1/2 mile) to Supermarket"
+  - identity: "P0404619: Population with Low-Access (>1 mile) to Supermarket"
+  - identity: "P04AE5E8: Population with Low-Access (>1/2 mile) to Supermarket"
+
+- identity: "Voter Turnout"
+  properties:
+  - identity: "P0475A56: Population Count"
+  - identity: "P0B61D18: Total Population, 2010"
+  - identity: "P0049744: Total Population In Households"
+  - identity: "P08D3684: Total Population By Race"
+
+- identity: "Percentage of Population with Limited Mobility"
+  properties:
+  - identity: "P0814D37: Percent of Population with Low-Income and Low-Access (>1 mile) to Supermarket"
+  - identity: "P0F81500: Percent of Population with Low-Income and Low-Access (>20 miles) to Supermarket"
+  - identity: "P0428954: Percent of Population with Low-Income and Low-Access (>1/2 mile) to Supermarket"
+  - identity: "P0BF64EC: Percent of Population with Low-Income and Low-Access (>10 miles) to Supermarket"
+
+- identity: "Air and Water Pollution Index"
+  properties:
+  - identity: "P00E2AAE: Open Water (Sqm)"
+  - identity: "P00198FA: Strong Wind - Exposure - Agriculture Value"
+  - identity: "P0FAC7D8: Tract Water Area"
+  - identity: "P05ABEB0: Riverine Flooding - Exposure - Agriculture Value"
+
+- identity: "Census Tract Population Density"
+  properties:
+  - identity: "P0382F48: Block Density (N_Blocks / Tract_Area_Sqmiles)"
+  - identity: "P04A94B3: Intersection Density (N_Realnodes / Tract_Area_Sqmiles)"
+  - identity: "P0E78C38: Tract Low-Income Population"
+  # - identity: "P05F6B0A: Census Tract Name"

@@ -7,3 +7,4 @@ numpy
 pandas
 more_itertools
 geopandas
+matplotlib

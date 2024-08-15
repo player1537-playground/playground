@@ -424,3 +424,142 @@ def Overlap(
     it = list(it)
 
     return it
+
+
+#--- PROMPT: Create LLM user/assistant prompts using jinja2 templates
+
+class PROMPT:
+    """
+    A class for creating and rendering prompt templates using the Jinja2 templating engine.
+
+    The PROMPT class provides a way to define and render prompt templates that can be used
+    to generate formatted prompts for language models. It uses the Jinja2 templating engine
+    to allow for dynamic generation of prompts based on input variables.
+
+    Methods
+    -------
+    register(name: str, template: str) -> None
+        Register a new prompt template with the given name and template string.
+
+    __new__(cls, s: str, /, **query) -> PROMPT
+        Create a new PROMPT instance with the given template string and query variables.
+
+    __call__(**query) -> dict
+        Render the prompt template with the given query variables and return the resulting
+        prompt dictionary.
+
+    The rendered prompt dictionary can include the following keys:
+    - "messages": A list of message dictionaries, where each dictionary represents a single
+    message in the conversation, with keys for the role (e.g., "user" or "assistant") and
+    the content of the message.
+    - "prompt": A string representing the prompt text.
+    - "grammar": A string representing a grammar for parsing the model's response.
+    - "parser": A string representing a regular expression pattern for parsing the model's
+    response.
+
+    Exactly one of "messages" or "prompt" must be specified in the rendered prompt dictionary.
+
+    """
+
+    templates = {}
+    environment = auto.jinja2.Environment(
+        loader=auto.jinja2.DictLoader(templates),
+        undefined=auto.jinja2.StrictUndefined,
+    )
+    environment.globals.update({
+        'auto': auto,
+    })
+
+    @classmethod
+    def register(PROMPT, name: str, template: str, /):
+        PROMPT.templates[name] = template
+
+    def __new__(PROMPT, s: str, /, **query):
+        Prompt = super().__new__(PROMPT)
+        Prompt.template = PROMPT.environment.from_string(s)
+
+        if query:
+            prompt = Prompt(**query)
+            return prompt
+
+        return Prompt
+
+    def __call__(self, **query):
+        template = self.template
+
+        context = {}
+
+        _messages = None
+        def AddMessage(role: str, content: str):
+            nonlocal _messages
+            if _messages is None:
+                _messages = []
+            content = content.strip()
+            _messages.append(dict(
+                role=role,
+                content=content,
+            ))
+            return f'<Message({role!r}, {content!r})>'
+        context |= dict(
+            user=lambda caller: AddMessage('user', caller()),
+            assistant=lambda caller: AddMessage('assistant', caller()),
+            system=lambda caller: AddMessage('system', caller()),
+        )
+
+        _prompt = None
+        def SetPrompt(prompt: str):
+            nonlocal _prompt
+            _prompt = prompt
+            return f'<Prompt({prompt!r})>'
+        context |= dict(
+            prompt=lambda caller: SetPrompt(caller()),
+        )
+
+        _grammar = None
+        def SetGrammar(grammar: str):
+            nonlocal _grammar
+            _grammar = grammar
+            return f'<Grammar({grammar!r})>'
+        context |= dict(
+            grammar=lambda caller: SetGrammar(caller()),
+        )
+
+        _parser = None
+        def SetParser(parser: str):
+            nonlocal _parser
+            _parser = parser
+            return f'<Parser({parser!r})>'
+        context |= dict(
+            parser=lambda caller: SetParser(caller()),
+        )
+
+        context |= query
+
+        _ = template.render(
+            **context,
+        )
+
+        prompt = auto.collections.UserDict(
+        )
+
+        assert (bool(_messages) != bool(_prompt)), \
+            f"Exactly one of 'messages' or 'prompt' must be specified."
+        if _messages is not None:
+            prompt |= dict(
+                messages=_messages,
+            )
+        elif _prompt is not None:
+            prompt |= dict(
+                prompt=_prompt,
+            )
+        else:
+            assert False
+
+        if _grammar is not None:
+            prompt |= dict(
+                grammar=_grammar,
+            )
+
+        if _parser is not None:
+            prompt.parser = _parser
+        return prompt

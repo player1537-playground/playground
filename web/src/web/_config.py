@@ -11,7 +11,7 @@ config = auto.types.SimpleNamespace()
 config.rootdir = auto.pathlib.Path(auto.os.environ['SCRIBE_ROOT_DIR'])
 config.datadir = auto.pathlib.Path(
     auto.os.environ.get(
-        'SCRIBE_ROOT_DIR',
+        'SCRIBE_DATA_DIR',
         config.rootdir / 'data',
     ),
 )

@@ -1,0 +1,58 @@
+identity: "Z650: Conviction in civil and criminal proceedings without imprisonment"
+
+magazines:
+- identity: "Poverty Rate"
+  properties:
+  - identity: "P07FDFE2: Poverty Level Percent (2 Decimal Places With Decimal Point), Rounded"
+  - identity: "P074936D: Proportion Of Population Below Poverty Level"
+  - identity: "P04529F4: Population Where Income Is Below Poverty Level"
+  - identity: "P071CB3E: Percent of Population At or Below Poverty Threshold"
+
+- identity: "Unemployment Rate"
+  properties:
+  - identity: "P0204018: Proportion Of Population 16+ Unemployed"
+  - identity: "P031BE1E: Total Unemployed Male Population 16 And Over"
+  - identity: "P04E1477: Total Female Population 16 And Over - Unemployed"
+  - identity: "P0D8F40D: Hail - Expected Annual Loss Rate - Population"
+
+- identity: "Educational Attainment"
+  properties:
+  - identity: "P0FF22E3: Proportion With High School Diploma And/Or Some College"
+  - identity: "P0046C04: Adult (25+ Years) Male Population With Only 8th Grade Education"
+  - identity: "P0FC6FD5: Adult (25+ Years) Male Population With Only 10th Grade Education"
+  - identity: "P09BB22B: Adult (25+ Years) Male Population With Only 4th Grade Education"
+
+- identity: "Food Insecurity Prevalence"
+  properties:
+  - identity: "P01FDD41: Population with Low Food Access"
+  - identity: "P0FF6C8C: Number of Community Food Services"
+  - identity: "P003E05A: Drought - Exposure - Agriculture Value"
+  - identity: "P07C8828: Number of Community Food Services with Employees"
+
+- identity: "Housing Instability"
+  properties:
+  - identity: "P07D8892: Total Housing Units"
+  - identity: "P0782085: 1 Attached Housing Unit In Structure"
+  - identity: "P0068404: 1 Attached Housing Unit In Structure - Two Or More Races Householder"
+  - identity: "P05C4F87: Housing Unit Built 2010 To 2013"
+
+- identity: "Access to Healthcare"
+  properties:
+  - identity: "P0C8F522: Is Low-Access (>1 mile) to Supermarket"
+  - identity: "P0FF2693: Is Low-Access (>1/2 mile) to Supermarket"
+  - identity: "P0404619: Population with Low-Access (>1 mile) to Supermarket"
+  - identity: "P04AE5E8: Population with Low-Access (>1/2 mile) to Supermarket"
+
+- identity: "Community Violence"
+  properties:
+  - identity: "P0E4E32C: Community Risk Factor - Value"
+  - identity: "P01DA57D: Community Resilience - Value"
+  - identity: "P0451E0D: Community Resilience - Score"
+  - identity: "P0E1A0DD: Mental Health & Abuse Care Facilities Per Square Miles"
+
+- identity: "Social Isolation"
+  properties:
+  - identity: "P02B9A83: Social Vulnerability Score"
+  - identity: "P0A91B2A: Social Vulnerability Percentile Within State"
+  - identity: "P0CD2CD0: Female Householder Living Alone"
+  - identity: "P0B0ECB3: Total Households With Or Without Social Security"

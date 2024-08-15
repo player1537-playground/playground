@@ -262,7 +262,7 @@ def Material(
     if cache is Ellipsis:
         global __62d2c2d6
         try: __62d2c2d6
-        except NameError: __62d2c2d6 = auto.shelve.open('vainl.Material.cache')
+        except NameError: __62d2c2d6 = auto.shelve.open(str(config.datadir / 'vainl.Material.cache'))
         cache = __62d2c2d6
     verbose = int(verbose)
 
@@ -280,6 +280,11 @@ def Material(
             property, _ = property.split(':', 1)
         properties.append(property)
 
+    it = properties
+    it = auto.more_itertools.chunked(it, 1)
+    if verbose >= 1:
+        it = auto.tqdm.auto.tqdm(it)
+
     ckey = {
         'properties': properties,
         'baseline': baseline,
@@ -287,13 +292,8 @@ def Material(
         'varietal': varietal,
         'ideation': ideation,
     }
-    ckey = auto.json.dumps(ckey, sort_keys=True)
-    if cache is None or ckey not in cache:
-        it = properties
-        it = auto.more_itertools.chunked(it, 4)
-        if verbose >= 1:
-            it = auto.tqdm.auto.tqdm(it)
-
+    ckey1 = auto.json.dumps(ckey, sort_keys=True)
+    if cache is None or ckey1 not in cache:
         dfs = []
         for properties in it:
             query = []
@@ -318,46 +318,51 @@ def Material(
             if api_key is not None:
                 headers['Authorization'] = f'Bearer {api_key}'
 
-            # ckey = {
-            #     'url': url,
-            #     'headers': headers,
-            # }
-            # ckey = auto.json.dumps(ckey, sort_keys=True)
-            # if cache is None or ckey not in cache:
-            print(url)
-            df = auto.pd.read_csv(
-                url,
-                dtype={
-                    'where': str,
-                },
-                quoting=auto.csv.QUOTE_NONNUMERIC,
-                low_memory=False,
-                storage_options={
-                    **headers,
-                },
-            ).set_index('where')
+            ckey = {
+                'url': url,
+                'headers': headers,
+            }
+            ckey = auto.json.dumps(ckey, sort_keys=True)
+            if cache is None or ckey not in cache:
+                print(url)
+                df = auto.pd.read_csv(
+                    url,
+                    dtype={
+                        'where': str,
+                    },
+                    quoting=auto.csv.QUOTE_NONNUMERIC,
+                    low_memory=False,
+                    storage_options={
+                        **headers,
+                    },
+                ).set_index('where')
 
-            if 'geometry' in df.columns:
-                geometry = df['geometry']
-                geometry = geometry.apply(lambda s: (
-                    auto.shapely.wkt.loads(s)
-                ) if not auto.pd.isna(s) else (
-                    None
-                ))
-                df = df.assign(**{
-                    'geometry': geometry,
-                })
-                df = auto.geopandas.GeoDataFrame(df, geometry='geometry')
+                if 'geometry' in df.columns:
+                    geometry = df['geometry']
+                    geometry = geometry.apply(lambda s: (
+                        auto.shapely.wkt.loads(s)
+                    ) if not auto.pd.isna(s) else (
+                        None
+                    ))
+                    df = df.assign(**{
+                        'geometry': geometry,
+                    })
+                    df = auto.geopandas.GeoDataFrame(df, geometry='geometry')
+
+                if cache is not None:
+                    cache[ckey] = df
+
+            else:
+                df = cache[ckey]
 
             dfs.append(df)
 
         df = auto.pd.concat(dfs, axis=1)
-
-        if cache is not None:
-            cache[ckey] = df
-
+        
+        cache[ckey1] = df
+    
     else:
-        df = cache[ckey]
+        df = cache[ckey1]
 
     return df
 

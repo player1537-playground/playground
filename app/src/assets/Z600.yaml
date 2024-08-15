@@ -1,0 +1,72 @@
+identity: "Z600: Problems of adjustment to life-cycle transitions"
+
+magazines:
+- identity: "Unemployment rate"
+  properties:
+  - identity: "P0204018: Proportion Of Population 16+ Unemployed"
+  - identity: "P031BE1E: Total Unemployed Male Population 16 And Over"
+  - identity: "P04E1477: Total Female Population 16 And Over - Unemployed"
+  - identity: "P0D8F40D: Hail - Expected Annual Loss Rate - Population"
+
+- identity: "Poverty rate"
+  properties:
+  - identity: "P07FDFE2: Poverty Level Percent (2 Decimal Places With Decimal Point), Rounded"
+  - identity: "P074936D: Proportion Of Population Below Poverty Level"
+  - identity: "P04529F4: Population Where Income Is Below Poverty Level"
+  - identity: "P071CB3E: Percent of Population At or Below Poverty Threshold"
+
+- identity: "Educational attainment"
+  properties:
+  - identity: "P0FF22E3: Proportion With High School Diploma And/Or Some College"
+  - identity: "P0046C04: Adult (25+ Years) Male Population With Only 8th Grade Education"
+  - identity: "P0FC6FD5: Adult (25+ Years) Male Population With Only 10th Grade Education"
+  - identity: "P09BB22B: Adult (25+ Years) Male Population With Only 4th Grade Education"
+
+- identity: "Median household income"
+  properties:
+  - identity: "P0D61060: Median Household Income"
+  - identity: "P0525D3D: Median Household Income"
+  - identity: "P04F7D2E: Median Family Income"
+  - identity: "P056137B: Median Household Income, Householder Of Some Other Race"
+
+- identity: "Population density"
+  properties:
+  - identity: "P0382F48: Block Density (N_Blocks / Tract_Area_Sqmiles)"
+  - identity: "P04A94B3: Intersection Density (N_Realnodes / Tract_Area_Sqmiles)"
+  - identity: "P0475A56: Population Count"
+  - identity: "P018C3EC: Population"
+
+- identity: "Access to healthcare facilities"
+  properties:
+  - identity: "P0C8F522: Is Low-Access (>1 mile) to Supermarket"
+  - identity: "P0FF2693: Is Low-Access (>1/2 mile) to Supermarket"
+  - identity: "P06F16F0: Mental Health & Abuse Care Facilities"
+  - identity: "P0404619: Population with Low-Access (>1 mile) to Supermarket"
+
+- identity: "Mental health provider density"
+  properties:
+  - identity: "P007D649: Mental Health Physicians"
+  - identity: "P04D0A8A: Mental Health Physicians Per Square Miles"
+  - identity: "P00399EA: Number of Mental Health Physicians Per 1000 People"
+  - identity: "P0E5FAFB: Number of Mental Health Physicians with Employees Per Square Miles"
+
+- identity: "Social cohesion"
+  properties:
+  - identity: "P0A0F76E: Civic/Social Organizations"
+  - identity: "P08336A5: Civic/Social Organizations with Employees"
+  - identity: "P00C8AD8: Active Civic/Social Organizations"
+  - identity: "P065CEB2: Active Civic/Social Organizations"
+
+- identity: "Language spoken at home"
+  properties:
+  - identity: "P08CC50F: Total 65 Years And Over That Speak Other Languages"
+  - identity: "P0001C82: Total 65 Years And Over That Speak Other Languages And English Not Well"
+  - identity: "P008702F: Total 65 Years And Over That Speak Other Indo-European Language"
+  - identity: "P06612E1: Total 65 Years And Over That Speak Indo-European Language And English Not Well"
+
+- identity: "Rental vacancy rate"
+  properties:
+  - identity: "P0744B56: Total Vacant Housing Units For Rent"
+  - identity: "P055EE14: Total Vacant Housing Units By Vacancy Status"
+  - identity: "P0D5D9AD: Total Renter-Occupied Housing Units With Cash Rent Less Than $100"
+  - identity: "P0BC4B5F: Total Renter-Occupied Housing Units With Household Income Less Than $10,000 - Less Than 20 Percent"

@@ -1,0 +1,72 @@
+identity: "Z550: Illiteracy and low-level literacy"
+
+magazines:
+- identity: "Unemployment Rate"
+  properties:
+  - identity: "P0204018: Proportion Of Population 16+ Unemployed"
+  - identity: "P031BE1E: Total Unemployed Male Population 16 And Over"
+  - identity: "P04E1477: Total Female Population 16 And Over - Unemployed"
+  - identity: "P0D8F40D: Hail - Expected Annual Loss Rate - Population"
+
+- identity: "Median Household Income"
+  properties:
+  - identity: "P0D61060: Median Household Income"
+  - identity: "P0525D3D: Median Household Income"
+  - identity: "P04F7D2E: Median Family Income"
+  - identity: "P056137B: Median Household Income, Householder Of Some Other Race"
+
+- identity: "Education Level (Highest Degree Held)"
+  properties:
+  - identity: "P0F3A328: Number of High Schools (Highest Grade > 9)"
+  - identity: "P097BBE6: Proportion With Bachelor'S Degree Or Higher"
+  - identity: "P0042DFA: Number of Middle Schools (Highest Grade > 6, Lowest Grade < 8)"
+  - identity: "P0FF22E3: Proportion With High School Diploma And/Or Some College"
+
+- identity: "Proportion of Population with Limited English Proficiency"
+  properties:
+  - identity: "P090D9A0: Total Population 18-64 Years Old That Speak Only English"
+  - identity: "P0866723: Proportion Of People Who Are Foreign Born"
+  - identity: "P0391A0C: Total 65 Years And Over That Speak Only English"
+  - identity: "P0E25A77: Total 5-17 Years That Speak Only English"
+
+- identity: "Proportion of Population Living Below the Poverty Line"
+  properties:
+  - identity: "P074936D: Proportion Of Population Below Poverty Level"
+  - identity: "P04529F4: Population Where Income Is Below Poverty Level"
+  - identity: "P071CB3E: Percent of Population At or Below Poverty Threshold"
+  - identity: "P0F1189F: Population 75 And Over Where Income Is Below Poverty Level"
+
+- identity: "Access to Public Libraries"
+  properties:
+  - identity: "P02F17A0: Number of Libraries/Archives Per 1000 People"
+  - identity: "P0EF2F0E: Number of Active Libraries/Archives Per 1000 People"
+  - identity: "P0B91047: Number of Libraries/Archives"
+  - identity: "P0EBCB9D: Number of Libraries/Archives"
+
+- identity: "Internet Access and Computer Ownership"
+  properties:
+  - identity: "P093FF00: % Households With No Internet Access"
+  - identity: "P0D3BDA4: Households With A Laptop/Desktop Computer"
+  - identity: "P045D107: Number of Households With No Internet Access"
+  - identity: "P0CCD83F: Number of Households With Any Computing Device And Any Type Of Broadband"
+
+- identity: "Proportion of Population with Limited Access to Healthcare"
+  properties:
+  - identity: "P0B5F7CE: Proportion Of Population With Public Assistance Income"
+  - identity: "P074936D: Proportion Of Population Below Poverty Level"
+  - identity: "P0E7ECAC: Percent of Population with Low-Access (>1/2 mile) to Supermarket"
+  - identity: "P0814D37: Percent of Population with Low-Income and Low-Access (>1 mile) to Supermarket"
+
+- identity: "Proportion of Population Living in Rented Housing"
+  properties:
+  - identity: "P0F92A08: Proportion Of Owner Occupied Housing Units"
+  - identity: "P08E4D4B: Total Renter-Occupied Housing Units"
+  - identity: "P0347034: Total Renter-Occupied Housing Units"
+  - identity: "P0DA3B05: Gross Rent As A Percentage of Income Among Renter-Occupied Housing Units"
+
+- identity: "Proportion of Population with a Disability"
+  properties:
+  - identity: "P01AE2DA: Adults With Any Disability"
+  - identity: "P0D1F5AE: Number of Elderly and Disabled Person Services with Employees per 1000 People"
+  - identity: "P0B5F7CE: Proportion Of Population With Public Assistance Income"
+  - identity: "P0DD5011: Number of Elderly/Disabled Person Services Per 1000 People"
