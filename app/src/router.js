@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import HelloView from '../views/HelloView.vue';
-import FooView from '../views/FooView.vue';
-import BarView from '../views/BarView.vue';
-import BazView from '../views/BazView.vue';
+import HelloView from './views/HelloView.vue';
+import FooView from './views/FooView.vue';
+import BarView from './views/BarView.vue';
+import BazView from './views/BazView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

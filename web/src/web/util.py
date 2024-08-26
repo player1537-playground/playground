@@ -1800,3 +1800,209 @@ def ICD10PCS(
     icd10pcs.sort_index(inplace=True)
 
     return icd10pcs
+
+
+#@title Score
+@auto.functools.cache
+def __Score_get(
+    *,
+    pred: auto.typing.Literal['DX1', 'DX2', 'DX3', 'PD1', 'PD2', 'PD3', 'PD4'],
+    prod: auto.typing.Literal['DX1', 'DX2', 'DX3', 'PD1', 'PD2', 'PD3', 'PD4'],
+    
+    root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+) -> auto.pd.DataFrame:
+    assert pred in ['DX1', 'DX2', 'DX3', 'PD1', 'PD2', 'PD3', 'PD4'], pred
+    assert prod in ['DX1', 'DX2', 'DX3', 'PD1', 'PD2', 'PD3', 'PD4'], prod
+
+    if root is ...:
+        root = config.datadir
+
+    if pred.startswith('DX') and prod.startswith('DX'):
+        a, b = sorted([pred, prod])
+    elif pred.startswith('PD') and prod.startswith('PD'):
+        a, b = sorted([pred, prod])
+    elif pred.startswith('DX') and prod.startswith('PD'):
+        a, b = prod, pred
+    elif pred.startswith('PD') and prod.startswith('DX'):
+        a, b = pred, prod
+
+    path = root / f'{a}-{b}.npz'
+    assert path.exists(), path
+    assert path.stat().st_size > 0, path
+    with path.open('rb') as f:
+        npz = auto.np.load(f)
+        arr = npz['arr']
+        rowids = npz['rowids'].tolist()
+        colids = npz['colids'].tolist()
+    
+    if a == prod:
+        assert b == pred
+        arr = arr.T
+        rowids, colids = colids, rowids
+    
+    df = auto.pd.DataFrame(
+        arr,
+        index=rowids,
+        columns=colids,
+    )
+    return df
+
+
+def Score(
+    *,
+    dxs: list[str],
+    pds: list[str],
+
+    verbose: bool | int = False,
+    icd10cm: auto.pd.DataFrame | None = None,
+    icd10pcs: auto.pd.DataFrame | None = None,
+):
+    verbose = int(verbose)
+    
+    Item = auto.typing.NamedTuple('Item', [
+        ('kind', auto.typing.Literal['DX1', 'DX2', 'DX3', 'PD1', 'PD2', 'PD3', 'PD4']),
+        ('name', str),
+        ('full', str),
+    ])
+
+    It = auto.typing.NamedTuple('It', [
+        ('kind', auto.typing.Literal['dx-dx', 'pd-pd', 'dx-pd']),
+        ('pred', Item),
+        ('prod', Item),
+    ])
+
+    itA = [
+        It('dx-dx', Item(f'DX{an}', adx[:an], adx), Item(f'DX{bn}', bdx[:bn], bdx))
+        for adx in dxs
+        for bdx in dxs
+        # if adx != bdx
+        for an in range(1, 1+min(3, len(adx)))
+        for bn in range(1, 1+min(3, len(bdx)))
+    ]
+
+    itB = [
+        It('pd-pd', Item(f'PD{an}', apd[:an], apd), Item(f'PD{bn}', bpd[:bn], bpd))
+        for apd in pds
+        for bpd in pds
+        # if apd != bpd
+        for an in range(1, 1+min(4, len(apd)))
+        for bn in range(1, 1+min(4, len(bpd)))
+    ]
+
+    itC = [
+        It('dx-pd', Item(f'DX{an}', adx[:an], adx), Item(f'PD{bn}', bpd[:bn], bpd))
+        for adx in dxs
+        for bpd in pds
+        for an in range(1, 1+min(3, len(adx)))
+        for bn in range(1, 1+min(4, len(bpd)))
+    ]
+
+    it = itA + itB + itC
+    it = sorted(it)  # optimize data loading
+    if verbose >= 1:
+        it = auto.tqdm.auto.tqdm(it, total=len(it))
+
+    totals = {
+        'dx-dx': auto.pd.DataFrame(
+            0,
+            index=dxs,
+            columns=dxs,
+            dtype=float,
+        ),
+        'pd-pd': auto.pd.DataFrame(
+            0,
+            index=pds,
+            columns=pds,
+            dtype=float,
+        ),
+        'dx-pd': auto.pd.DataFrame(
+            0,
+            index=dxs,
+            columns=pds,
+            dtype=float,
+        ),
+    }
+    counts = {
+        'dx-dx': 0,
+        'pd-pd': 0,
+        'dx-pd': 0,
+    }
+
+    for it in it:
+        df = __Score_get(pred=it.pred.kind, prod=it.prod.kind)
+
+        # For each predictor, we want to create vectors vA and vB.
+        # vA is the probabilities of all products, given the predictor. vB is +1
+        # where the product is present in our person, and -1 where it isn't.
+        #
+        # Iteratively, we can imagine doing this one at a time: for an item iA
+        # and an item iB, we add up the probability of cooccurrence of iA and iB,
+        # which we can call X, and subtract all the other probabilities, Y.
+        #
+        # There is a trick. Because the probabilities add to 1, then Y = 1 - X.
+        # So instead of doing "+= X - Y" then it's the same as "+= X - (1 - X)"
+        # or just "+= 2X - 1"
+
+        probs = df.loc[it.pred.name]
+        prob = probs[it.prod.name] / (1e-9 + probs.sum())
+
+        value = (
+            # 2 * prob - 1
+            prob
+            # prob / len(it.pred.full) / len(it.prod.full)
+        )
+
+        totals[it.kind].loc[it.pred.full, it.prod.full] += value
+        counts[it.kind] += 1
+    
+    total = 0
+    for kind in totals:
+        totals[kind] /= (
+            counts[kind]
+            # auto.np.sqrt(counts[kind])
+        )
+        
+        total += totals[kind].sum().sum()
+    
+    if verbose >= 2:
+        assert icd10cm is not None
+        assert icd10pcs is not None
+        print(f'Total: {total:.3f}')
+        print(f'  DX:')
+        for dx in dxs:
+            print(f'    {dx}: {auto.textwrap.fill(icd10cm.loc[dx, "desc"], initial_indent="", subsequent_indent="      ")}')
+        print(f'  PD:')
+        for pd in pds:
+            print(f'    {pd}: {auto.textwrap.fill(icd10pcs.loc[pd, "desc"], initial_indent="", subsequent_indent="      ")}')
+        display(totals['dx-dx'])
+        display(totals['pd-pd'])
+        display(totals['dx-pd'])
+    
+    return total
+
+
+def SQLQuery(s: str, /, **kwargs):
+    environment = auto.jinja2.Environment()
+    environment.filters['tosqlref'] = lambda x: '"' + str(x).replace('"', '""') + '"'
+    environment.filters['tosqlstr'] = lambda x: "'" + str(x).replace("'", "''") + "'"
+    environment.globals['auto'] = auto
+
+    template = environment.from_string(s)
+
+    return template.render(**kwargs)
+
+
+def SQLQuery_verbose(s: str, /, **kwargs):
+    s = SQLQuery(s, **kwargs)
+
+    with auto.mediocreatbest.Textarea():
+        print(s)
+
+    return s
+
+SQLQuery.verbose = SQLQuery_verbose
+
+
+def starstarmap(function, iterable):
+    for kwargs in iterable:
+        yield function(**kwargs)
