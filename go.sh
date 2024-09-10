@@ -10,6 +10,99 @@ go() { "go-$@"; }
 next() { "${FUNCNAME[1]:?}-$@"; }
 #---
 
+docker_source_dir=${root:?}
+read -r -d '' dockerfile <<'__DOCKERFILE__'
+FROM ubuntu:24.04 AS base
+
+RUN /bin/bash <<'__INSTALL_DEPENDENCIES__'
+set -euo pipefail on
+
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update \
+##
+
+apt-get upgrade \
+    --yes \
+##
+
+packages=(
+    python3.12
+    python3.12-venv
+    python3.12-dev
+    python3-pip
+    libgdbm6
+    python3.12-gdbm
+)
+
+apt-get install -y \
+"${packages[@]}" \
+##
+
+__INSTALL_DEPENDENCIES__
+
+__DOCKERFILE__
+
+docker_image_tag=${project,,}:latest
+docker_container_name=${project,,}
+
+go-Build-Image() {
+    <<<"${dockerfile:?}" \
+    pexec docker build \
+        --progress=plain \
+        --tag="${docker_image_tag:?}" \
+        --target=base \
+        --file=- \
+        "${docker_source_dir:?}" \
+    ##
+}
+
+go-Start-Container() {
+    pexec docker run \
+        --rm \
+        --init \
+        --detach \
+        --ulimit=core=0 \
+        --cap-add=SYS_PTRACE \
+        --net=host \
+        --name="${docker_container_name:?}" \
+        --mount="type=bind,src=${root:?},dst=${root:?},readonly=false" \
+        --mount="type=bind,src=${HOME:?},dst=${HOME:?},readonly=false" \
+        --mount="type=bind,src=/etc/passwd,dst=/etc/passwd,readonly=true" \
+        --mount="type=bind,src=/etc/group,dst=/etc/group,readonly=true" \
+        --mount="type=bind,src=/mnt/seenas2/data,dst=/mnt/seenas2/data,readonly=false" \
+        --mount="type=bind,src=/mnt/data,dst=/mnt/data,readonly=false" \
+        "${docker_image_tag:?}" \
+        sleep infinity \
+    ##
+}
+
+go-Stop-Container() {
+    pexec docker stop \
+        --time=0 \
+        "${docker_container_name:?}" \
+    ##
+}
+
+go-Invoke-Container() {
+    local tty
+    if [ -t 0 ]; then
+        tty=
+    fi
+
+    pexec docker exec \
+        ${tty+--tty} \
+        --interactive \
+        --detach-keys="ctrl-q,ctrl-q" \
+        --user="$(id -u):$(id -g)" \
+        --env=USER \
+        --env=HOSTNAME \
+        --workdir="${PWD:?}" \
+        "${docker_container_name:?}" \
+        "${@:?Invoke-Container: missing command}" \
+    ##
+}
+
 --scribe-vars() {
     SCRIBE_ROOT_DIR=${scribe_root_dir:?}
     export SCRIBE_ROOT_DIR
@@ -31,12 +124,12 @@ declare -A server_host
 declare -A server_bind
 declare -A server_port
 
-server_host["red"]="https://red.is.mediocreatbest.xyz/"
-server_bind["red"]="127.55.84.71"
+server_host["red"]=https://red.is.mediocreatbest.xyz/
+server_bind["red"]=127.55.84.71
 server_port["red"]=46072
 
-server_host["purple"]="https://purple.is.mediocreatbest.xyz/"
-server_bind["purple"]="127.102.167.41"
+server_host["purple"]=https://purple.is.mediocreatbest.xyz/
+server_bind["purple"]=127.102.167.41
 server_port["purple"]=51399
 
 
@@ -48,18 +141,22 @@ app_server_host=${server_host["red"]:?}
 app_server_bind=${server_bind["red"]:?}
 app_server_port=${server_port["red"]:?}
 
-go-app() {
-    next "$@"
+go-Initialize-AppEnvironment() {
+    pexec "${self:?}" Invoke-Container "${self:?}" --Initialize-AppEnvironment "$@"
 }
 
-go-app-Initialize-Environment() {
+go---Initialize-AppEnvironment() {
     cd "${app:?}" \
     && \
     pexec npm install \
     ##
 }
 
-go-app-Invoke-Server() {
+go-Invoke-AppServer() {
+    pexec "${self:?}" Invoke-Container "${self:?}" --Invoke-AppServer "$@"
+}
+
+go---Invoke-AppServer() {
     cd "${app:?}" \
     && \
     pexec node_modules/.bin/vite \
@@ -69,48 +166,14 @@ go-app-Invoke-Server() {
     ##
 }
 
-go-app-Start-Server() {
+go-Start-AppServer() {
     pexec tmux new-session \
         -A \
         -s "${app_session_name:?}" \
-    "${self:?}" app Invoke-Server \
+    "${self:?}" app Invoke-AppServer \
     ##
 }
 
-#---
-
-www=${root:?}/www
-www_virtualenv_path=${www:?}/venv
-
-go-www() {
-    next "$@"
-}
-
-go-www-New-Virtualenv() {
-    pexec python3 -m venv \
-        "${www_virtualenv_path:?}" \
-    ##
-}
-
-go-www-Initialize-Virtualenv() {
-    pexec "${www_virtualenv_path:?}/bin/pip" install \
-        -r "${www:?}/requirements.txt" \
-    ##
-}
-
-go-www-Invoke-Migrations() {
-    pexec "${www_virtualenv_path:?}/bin/python" \
-    "${www:?}/manage.py" migrate \
-        "$@" \
-    ##
-}
-
-go-www-Invoke-Server() {
-    pexec "${www_virtualenv_path:?}/bin/python" \
-    "${www:?}/manage.py" runserver \
-        "$@" \
-    ##
-}
 
 #---
 
@@ -121,24 +184,32 @@ web_server_host=${server_host["purple"]:?}
 web_server_bind=${server_bind["purple"]:?}
 web_server_port=${server_port["purple"]:?}
 
-go-web() {
-    next "$@"
+go-New-WebEnvironment() {
+    pexec "${self:?}" Invoke-Container "${self:?}" --New-WebEnvironment "$@"
 }
 
-go-web-New-Virtualenv() {
+go---New-WebEnvironment() {
     pexec python3 -m venv \
         "${web_virtualenv_path:?}" \
     ##
 }
 
-go-web-Initialize-Environment() {
+go-Initialize-WebEnvironment() {
+    pexec "${self:?}" Invoke-Container "${self:?}" --Initialize-WebEnvironment "$@"
+}
+
+go---Initialize-WebEnvironment() {
     pexec "${web_virtualenv_path:?}/bin/pip" install \
         -r "${web:?}/requirements.txt" \
         -e "${web:?}" \
     ##
 }
 
-go-web-Invoke-Server() {
+go-Invoke-WebServer() {
+    pexec "${self:?}" Invoke-Container "${self:?}" --Invoke-WebServer "$@"
+}
+
+go---Invoke-WebServer() {
     --scribe-vars
 
     pexec "${web_virtualenv_path:?}/bin/uvicorn" \
@@ -148,11 +219,11 @@ go-web-Invoke-Server() {
     ##
 }
 
-go-web-Start-Server() {
+go-Start-WebServer() {
     pexec tmux new-session \
         -A \
         -s "${web_session_name:?}" \
-    "${self:?}" web Invoke-Server \
+    "${self:?}" Invoke-WebServer \
     ##
 }
 

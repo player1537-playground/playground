@@ -10,7 +10,7 @@ case "${USER:-nouser}@${HOSTNAME:-nohost}" in
 esac
 
 
-scribe_root_dir=${root:?}
+scribe_root_dir=/opt
 vainl_api_url=https://sdoh.with.vainl.in.production.is.mediocreatbest.xyz/vainl/
 
-. "${root:?}/.env"
+. "${root:?}/.prod.env"

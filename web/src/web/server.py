@@ -1424,7 +1424,7 @@ async def dip(
         def scope():
             root = config.datadir
             path = root / '__2497fac0.ndjson'
-            if not path.exists(): return (None, None)
+            if not path.exists(): return ([], [])
             requests, responses = [], []
             with path.open('r') as f:
                 for line in f:
