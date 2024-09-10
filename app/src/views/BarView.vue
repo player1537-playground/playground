@@ -10,8 +10,6 @@
           width="128"
         ></v-img>
       </template>
-
-      <v-toolbar-title>Canvas</v-toolbar-title>
     </v-app-bar>
 
   <!-- <v-spacer></v-spacer> -->

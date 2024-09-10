@@ -9,8 +9,6 @@
           width="128"
         ></v-img>
       </template>
-
-      <v-toolbar-title>Scribe</v-toolbar-title>
     </v-app-bar>
     <v-spacer></v-spacer>
     
@@ -20,7 +18,7 @@
       </v-col>
     </v-row>
     <v-row>
-      <v-col cols="3">
+      <!-- <v-col cols="3">
         <v-card>
           <v-card-title>Passages</v-card-title>
           <v-card-text>
@@ -35,8 +33,8 @@
             </v-list>
           </v-card-text>
         </v-card>
-      </v-col>
-      <v-col cols="6">
+      </v-col> -->
+      <v-col offset=3 cols="6">
         <v-textarea
           v-model="text"
           :rows="10"

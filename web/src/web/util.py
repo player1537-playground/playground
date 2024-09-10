@@ -1804,8 +1804,9 @@ def ICD10PCS(
 
 #@title Score
 @auto.functools.cache
-def __Score_get(
+def Matrix(
     *,
+    what: auto.typing.Literal['Positive', 'Negative'],
     pred: auto.typing.Literal['DX1', 'DX2', 'DX3', 'PD1', 'PD2', 'PD3', 'PD4'],
     prod: auto.typing.Literal['DX1', 'DX2', 'DX3', 'PD1', 'PD2', 'PD3', 'PD4'],
     
@@ -1826,7 +1827,7 @@ def __Score_get(
     elif pred.startswith('PD') and prod.startswith('DX'):
         a, b = pred, prod
 
-    path = root / f'{a}-{b}.npz'
+    path = root / f'{what}{a}-{b}.npz'
     assert path.exists(), path
     assert path.stat().st_size > 0, path
     with path.open('rb') as f:
@@ -1844,14 +1845,20 @@ def __Score_get(
         arr,
         index=rowids,
         columns=colids,
+        # dtype='f4',
     )
+
+    # df /= 1e-9 + df.sum(axis=1)
+
     return df
 
 
 def Score(
     *,
+    what: auto.typing.Literal['Positive', 'Negative'],
     dxs: list[str],
     pds: list[str],
+    top: int = 0,
 
     verbose: bool | int = False,
     icd10cm: auto.pd.DataFrame | None = None,
@@ -1896,6 +1903,14 @@ def Score(
         for an in range(1, 1+min(3, len(adx)))
         for bn in range(1, 1+min(4, len(bpd)))
     ]
+    
+    # itD = [
+    #     It('pd-dx', Item(f'PD{an}', apd[:an], apd), Item(f'DX{bn}', bdx[:bn], bdx))
+    #     for apd in pds
+    #     for bdx in dxs
+    #     for an in range(1, 1+min(4, len(apd)))
+    #     for bn in range(1, 1+min(3, len(bdx)))
+    # ]
 
     it = itA + itB + itC
     it = sorted(it)  # optimize data loading
@@ -1921,15 +1936,22 @@ def Score(
             columns=pds,
             dtype=float,
         ),
+        'pd-dx': auto.pd.DataFrame(
+            0,
+            index=pds,
+            columns=dxs,
+            dtype=float,
+        ),
     }
     counts = {
         'dx-dx': 0,
         'pd-pd': 0,
         'dx-pd': 0,
+        'pd-dx': 0,
     }
 
     for it in it:
-        df = __Score_get(pred=it.pred.kind, prod=it.prod.kind)
+        df = Matrix(what=what, pred=it.pred.kind, prod=it.prod.kind)
 
         # For each predictor, we want to create vectors vA and vB.
         # vA is the probabilities of all products, given the predictor. vB is +1
@@ -1944,7 +1966,10 @@ def Score(
         # or just "+= 2X - 1"
 
         probs = df.loc[it.pred.name]
-        prob = probs[it.prod.name] / (1e-9 + probs.sum())
+        prob = (
+            probs[it.prod.name] / (1e-9 + probs.sum())
+            # probs[it.prod.name]
+        )
 
         value = (
             # 2 * prob - 1
@@ -1954,16 +1979,50 @@ def Score(
 
         totals[it.kind].loc[it.pred.full, it.prod.full] += value
         counts[it.kind] += 1
-    
+
     total = 0
     for kind in totals:
         totals[kind] /= (
             counts[kind]
             # auto.np.sqrt(counts[kind])
         )
-        
+
         total += totals[kind].sum().sum()
     
+    if top == 0:
+        pass
+
+    elif top == 1:
+        Best = auto.typing.NamedTuple('Best', [
+            ('kind', auto.typing.Literal['dx-dx', 'pd-pd', 'dx-pd']),
+            ('pred', auto.typing.Literal['DX', 'PD']),
+            ('prod', auto.typing.Literal['DX', 'PD']),
+            ('value', float),
+            ('pred_name', str),
+            ('prod_name', str),
+        ])
+        best = None
+        
+        def scope(kind, PRED, PROD):
+            nonlocal best
+            for pred, row in totals[kind].iterrows():
+                for prod, value in row.items():
+                    if best is None or value > best.value:
+                        best = Best(kind, PRED, PROD, value, pred, prod)
+        scope('dx-dx', 'DX', 'DX')
+        scope('pd-pd', 'PD', 'PD')
+        scope('dx-pd', 'DX', 'PD')
+        
+        foo = { 'DX': set(), 'PD': set() }
+        foo[best.pred].add(best.pred_name)
+        foo[best.prod].add(best.prod_name)
+
+        dxs = sorted(foo['DX'])
+        pds = sorted(foo['PD'])
+
+    else:
+        raise ValueError(f'Invalid top: {top!r}')
+
     if verbose >= 2:
         assert icd10cm is not None
         assert icd10pcs is not None
@@ -1978,7 +2037,10 @@ def Score(
         display(totals['pd-pd'])
         display(totals['dx-pd'])
     
-    return total
+    if top > 0:
+        return total, dxs, pds
+    else:
+        return total
 
 
 def SQLQuery(s: str, /, **kwargs):

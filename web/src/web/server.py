@@ -177,29 +177,47 @@ def PD2PD():
 
 
 @auto.functools.cache
-def Database():
-    root = config.datadir
+def __Database():
+    def scope():
+        root = config.datadir
+        
+        path = root / 'MIMIC-IV-Note.sqlite3'
+        assert path.exists(), path
+        conn = auto.sqlite3.connect(
+            path,
+            check_same_thread=False,
+        )
+        
+        path = root / 'MIMIC-IV.sqlite3'
+        assert path.exists(), path
+        conn.execute(util.SQLQuery(r'''
+            ATTACH DATABASE {{ path |tosqlstr }} AS "MIMICIV";
+        ''', path=path))
+        
+        path = root / 'Database.sqlite3'
+        assert path.exists(), path
+        conn.execute(util.SQLQuery(r'''
+            ATTACH DATABASE {{ path |tosqlstr }} AS "MIMICIVAlt";
+        ''', path=path))
+        
+        return conn
+
+    queue = auto.queue.Queue()
+    for _ in range(8):
+        queue.put_nowait(scope())
     
-    path = root / 'MIMIC-IV-Note.sqlite3'
-    assert path.exists(), path
-    conn = auto.sqlite3.connect(
-        path,
-        check_same_thread=False,
-    )
+    @auto.contextlib.contextmanager
+    def scope():
+        conn = queue.get()
+        try:
+            yield conn
+        finally:
+            queue.put_nowait(conn)
     
-    path = root / 'MIMIC-IV.sqlite3'
-    assert path.exists(), path
-    conn.execute(util.SQLQuery(r'''
-        ATTACH DATABASE {{ path |tosqlstr }} AS "MIMICIV";
-    ''', path=path))
-    
-    path = root / 'Database.sqlite3'
-    assert path.exists(), path
-    conn.execute(util.SQLQuery(r'''
-        ATTACH DATABASE {{ path |tosqlstr }} AS "MIMICIVAlt";
-    ''', path=path))
-    
-    return conn
+    return scope
+
+
+Database = __Database()
 
 
 @auto.contextlib.asynccontextmanager
@@ -1088,8 +1106,94 @@ async def ping(
     
     return response
 
+class rewardRequest(auto.pydantic.BaseModel):
+    what: auto.typing.Literal['Positive', 'Negative', 'Positive-Negative']
+    dx: list[str]
+    pd: list[str]
+
+
+class rewardResponse(auto.pydantic.BaseModel):
+    score: float
+    dxs: list[str]
+    pds: list[str]
+
+
+@app.post("/reward/")
+async def reward(
+    *,
+    request: rewardRequest,
+) -> rewardResponse:
+    global __416b2eb7
+    try: __416b2eb7
+    except NameError:
+        def scope():
+            root = config.datadir
+            path = root / '__416b2eb7.json'
+            if not path.exists(): return ([], [])
+            requests, responses = [], []
+            with path.open('r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line == '':
+                        continue
+                
+                    json = auto.json.loads(line)
+                    request = rewardRequest.parse_obj(json['request'])
+                    response = rewardResponse.parse_obj(json['response'])
+                    
+                    requests.append(request)
+                    responses.append(response)
+            return (requests, responses)
+        __416b2eb7 = scope()
+    for req, res in zip(*__416b2eb7):
+        if req == request:
+            return res
+    
+    if request.what == 'Positive-Negative':
+        positive = util.Score(
+            what='Positive',
+            dxs=request.dx,
+            pds=request.pd,
+        )
+        negative, dxs, pds = util.Score(
+            what='Negative',
+            dxs=request.dx,
+            pds=request.pd,
+            top=1,
+        )
+        score = positive - negative
+
+    else:
+        score, dxs, pds = util.Score(
+            what=request.what,
+            dxs=request.dx,
+            pds=request.pd,
+            top=1,
+        )
+    
+    response = rewardResponse(
+        score=score,
+        dxs=dxs,
+        pds=pds,
+    )
+    
+    def scope():
+        root = config.datadir
+        path = root / '__416b2eb7.json'
+        with path.open('a') as f:
+            auto.json.dump({
+                'request': request.dict(),
+                'response': response.dict(),
+            }, f)
+            f.write('\n')
+        return (__416b2eb7[0] + [request], __416b2eb7[1] + [response])
+    __416b2eb7 = scope()
+
+    return response
+
 
 class bopRequest(auto.pydantic.BaseModel):
+    what: auto.typing.Literal['Positive', 'Negative']
     dx: list[str]
     pd: list[str]
     n: int
@@ -1136,6 +1240,7 @@ async def bop(
         return __e52074cc[1]
     
     baseline = util.Score(
+        what=request.what,
         dxs=request.dx,
         pds=request.pd,
     )
@@ -1203,6 +1308,82 @@ async def bop(
     return response
 
 
+class ringRequest(auto.pydantic.BaseModel):
+    what: auto.typing.Literal['Positive', 'Negative', 'Positive-Negative', 'Positive/Negative']
+    pred: auto.typing.Literal['DX1', 'DX2', 'DX3', 'PD1', 'PD2', 'PD3', 'PD4']
+    prod: auto.typing.Literal['DX1', 'DX2', 'DX3', 'PD1', 'PD2', 'PD3', 'PD4']
+
+
+@app.post("/ring/")
+async def ring(
+    *,
+    request: ringRequest,
+    icd10cm: auto.typing.Annotated[
+        auto.pd.DataFrame,
+        auto.fastapi.Depends(
+            ICD10CM,
+        ),
+    ],
+    icd10pcs: auto.typing.Annotated[
+        auto.pd.DataFrame,
+        auto.fastapi.Depends(
+            ICD10PCS,
+        ),
+    ],
+):
+    if request.what == 'Positive':
+        matrix = util.Matrix(
+            what='Positive',
+            pred=request.pred,
+            prod=request.prod,
+        )
+
+    elif request.what == 'Negative':
+        matrix = util.Matrix(
+            what='Negative',
+            pred=request.pred,
+            prod=request.prod,
+        )
+
+    elif request.what == 'Positive-Negative':
+        positive = util.Matrix(
+            what='Positive',
+            pred=request.pred,
+            prod=request.prod,
+        )
+        negative = util.Matrix(
+            what='Negative',
+            pred=request.pred,
+            prod=request.prod,
+        )
+        matrix = positive - negative
+    
+    elif request.what == 'Positive/Negative':
+        positive = util.Matrix(
+            what='Positive',
+            pred=request.pred,
+            prod=request.prod,
+        )
+        negative = util.Matrix(
+            what='Negative',
+            pred=request.pred,
+            prod=request.prod,
+        )
+        matrix = positive / (1e-9 + negative)
+
+    else:
+        raise ValueError(request.what)
+
+    d = matrix.to_dict(
+        orient='split',
+    )
+
+    return auto.fastapi.Response(
+        content=auto.json.dumps(d),
+        media_type='application/json',
+    )
+
+
 class dipRequest(auto.pydantic.BaseModel):
     text: str
     limit: int
@@ -1210,12 +1391,10 @@ class dipRequest(auto.pydantic.BaseModel):
 
 class dipResponseDiagnosis(auto.pydantic.BaseModel):
     dx10: str
-    desc: str | None
 
 
 class dipResponseProcedure(auto.pydantic.BaseModel):
     pd10: str
-    desc: str | None
 
 
 class dipResponseItem(auto.pydantic.BaseModel):
@@ -1226,38 +1405,18 @@ class dipResponseItem(auto.pydantic.BaseModel):
     procedure: list[dipResponseProcedure]
 
 
-class dipResponseDiagnosesItem(auto.pydantic.BaseModel):
-    dx10: str
-    count: int
-    desc: str | None
-
-
-class dipResponseProceduresItem(auto.pydantic.BaseModel):
-    pd10: str
-    count: int
-    desc: str | None
-
-
 class dipResponseSearch(auto.pydantic.BaseModel):
     items: list[dipResponseItem]
 
 
 class dipResponse(auto.pydantic.BaseModel):
     search: dipResponseSearch
-    diagnoses: list[dipResponseDiagnosesItem]
-    procedures: list[dipResponseProceduresItem]
 
 
 @app.post("/dip/")
 async def dip(
     *,
     request: dipRequest,
-    database: auto.typing.Annotated[
-        auto.sqlite3.Connection,
-        auto.fastapi.Depends(
-            Database,
-        ),
-    ],
 ) -> dipResponse:
     global __2497fac0
     try: __2497fac0
@@ -1274,6 +1433,13 @@ async def dip(
                         continue
                 
                     json = auto.json.loads(line)
+                    if 'diagnoses' in json['response']: del json['response']['diagnoses']
+                    if 'procedures' in json['response']: del json['response']['procedures']
+                    for item in json['response']['search']['items']:
+                        for diagnosis in item['diagnosis']:
+                            if 'desc' in diagnosis: del diagnosis['desc']
+                        for procedure in item['procedure']:
+                            if 'desc' in procedure: del procedure['desc']
                     request = dipRequest.parse_obj(json['request'])
                     response = dipResponse.parse_obj(json['response'])
                     
@@ -1296,158 +1462,102 @@ async def dip(
         for x in it
     )
     
-    sqlquery = util.SQLQuery(r'''
-        SELECT
-            json_object
-            ( 'hadm_id', "discharge"."hadm_id"
-            , 'rank', "rank"
-            , 'course', "fts___discharge"."Brief Hospital Course"
-            , 'diagnosis', (
-                SELECT
-                    json_group_array(json_object
-                    ( 'dx10', "diagnosis"."dx10"
-                    , 'desc', "icd10cm"."desc"
-                    ) )
-                FROM "diagnosis"
-                LEFT JOIN "icd10cm"
-                  ON "diagnosis"."dx10" = "icd10cm"."dx10"
-                WHERE "diagnosis"."hadm_id" = "discharge"."hadm_id"
-                  AND "diagnosis"."dx10" IS NOT NULL
-                )
-            , 'procedure', (
-                SELECT
-                    json_group_array(json_object
-                    ( 'pd10', "procedure"."pd10"
-                    , 'desc', "icd10pcs"."desc"
-                    ) )
-                FROM "procedure"
-                LEFT JOIN "icd10pcs"
-                  ON "procedure"."pd10" = "icd10pcs"."pd10"
-                WHERE "procedure"."hadm_id" = "discharge"."hadm_id"
-                  AND "procedure"."pd10" IS NOT NULL
-                )
-            ) AS "item"
-        FROM "fts___discharge"
-        JOIN "discharge"
-          ON "discharge"."rowid" = "fts___discharge"."rowid"
-        WHERE "fts___discharge"."Brief Hospital Course" MATCH ?
-        ORDER BY "rank"
-        LIMIT {{ limit }};
-    ''', limit=request.limit)
+    def scope():
+        with Database() as database:
+            count ,= database.execute(util.SQLQuery(r'''
+                SELECT MAX(ROWID)
+                FROM "discharge"
+                LIMIT 1
+            ''')).fetchone()
+        
+        return count
+    global __2cfbada9
+    try: __2cfbada9
+    except NameError: __2cfbada9 = scope()
+    count = __2cfbada9
     
-    df = auto.pd.read_sql_query(sqlquery, database, params=[query])
-    # /display df
+    def scope(*, beg, end):
+        sqlquery = util.SQLQuery(r'''
+            SELECT
+                json_object
+                ( 'hadm_id', "discharge"."hadm_id"
+                , 'rank', "rank"
+                , 'course', "fts___discharge"."Brief Hospital Course"
+                , 'diagnosis', (
+                    SELECT
+                        json_group_array(json_object
+                        ( 'dx10', "diagnosis"."dx10"
+                        ) )
+                    FROM "diagnosis"
+                    WHERE "diagnosis"."hadm_id" = "discharge"."hadm_id"
+                    AND "diagnosis"."dx10" IS NOT NULL
+                    )
+                , 'procedure', (
+                    SELECT
+                        json_group_array(json_object
+                        ( 'pd10', "procedure"."pd10"
+                        ) )
+                    FROM "procedure"
+                    WHERE "procedure"."hadm_id" = "discharge"."hadm_id"
+                    AND "procedure"."pd10" IS NOT NULL
+                    )
+                ) AS "item"
+            FROM "fts___discharge"
+            JOIN "discharge"
+              ON "discharge"."rowid" = "fts___discharge"."rowid"
+            WHERE "fts___discharge"."rowid" >= {{ beg }}
+              AND "fts___discharge"."rowid" < {{ end }}
+              AND "fts___discharge"."Brief Hospital Course" MATCH ?
+            ORDER BY "rank"
+            LIMIT {{ limit }};
+        ''', limit=request.limit, beg=beg, end=end)
+        
+        with Database() as database:
+            df = auto.pd.read_sql_query(sqlquery, database, params=[query])
+            # /display df
+        
+        row = df.iloc[0]
+        
+        items = []
+        for _, row in df.iterrows():
+            item = row['item']
+            item = dipResponseItem.parse_raw(item)
+            
+            items.append(item)
+
+        return items
     
+    N = 8
+    batch = int(auto.math.ceil(count / N))
+
+    it = [
+        (beg, min(count, beg + batch))
+        for beg in range(0, count, batch)
+    ]
+    assert N-1 <= len(it) <= N+1, f'Expected ~{N} batches, got {len(it)}'
+
+    with auto.concurrent.futures.ThreadPoolExecutor(len(it)) as pool:
+        futures = []
+        for beg, end in it:
+            future = pool.submit(scope, beg=beg, end=end)
+            futures.append(future)
+        
+        it = auto.concurrent.futures.as_completed(futures)
+        it = auto.tqdm.auto.tqdm(it, total=len(futures))
+        
+        itemses = []
+        for future in it:
+            items = future.result()
+            itemses.extend(items)
+
+    itemses.sort(key=lambda x: x.rank)
+    itemses = itemses[:request.limit]
+
     response = dipResponse(
         search=dipResponseSearch(
-            items=[],
+            items=itemses,
         ),
-        diagnoses=[],
-        procedures=[],
     )
-    
-    for _, row in df.iterrows():
-        item = row['item']
-        item = dipResponseItem.parse_raw(item)
-
-        response.search.items.append(item)
-    
-    diagnoses = auto.collections.Counter()
-    for item in response.search.items:
-        for dx in item.diagnosis:
-            dx = dx.dx10
-            for n in range(len(dx), 2, -1):
-                short = dx[:n]
-                assert 3 <= len(short) <= 7, (dx, short)
-
-                diagnoses[short] += 1
-                
-    diagnoses = auto.pd.DataFrame(
-        diagnoses.most_common(),
-        columns=['dx10', 'count'],
-    )
-    diagnoses.set_index([
-        'dx10',
-    ], inplace=True)
-    
-    it = diagnoses.index.tolist()
-    it = auto.more_itertools.chunked(it, 900)
-
-    dfs = []
-    for dx10s in it:
-        df = auto.pd.read_sql_query(util.SQLQuery(r'''
-            SELECT
-                "icd10cm"."dx10",
-                "icd10cm"."desc"
-            FROM "icd10cm"
-            WHERE "icd10cm"."dx10" IN (
-                {%- set sep = joiner(",") %}
-                {%- for _ in dx10s %}
-                {{ sep() }} ?
-                {%- endfor %}
-            )
-            ORDER BY "icd10cm"."dx10"
-        ''', dx10s=dx10s), database, params=dx10s, index_col='dx10')
-        dfs.append(df)
-
-    df = auto.pd.concat(dfs)
-    # /display df
-
-    diagnoses = diagnoses.join(df, how='left')
-    # with auto.pd.option_context('display.max_rows', None):
-    #     /display diagnoses
-    
-    response.diagnoses.extend(util.starstarmap(dipResponseDiagnosesItem, diagnoses.replace({
-        auto.np.nan: None,
-    }).reset_index().to_dict(orient='records')))
-    
-    procedures = auto.collections.Counter()
-    for item in response.search.items:
-        for pd in item.procedure:
-            pd = pd.pd10
-            for n in range(len(pd), 0, -1):
-                short = pd[:n]
-                assert 1 <= len(short), (pd, short)
-
-                procedures[short] += 1
-
-    procedures = auto.pd.DataFrame(
-        procedures.most_common(),
-        columns=['pd10', 'count'],
-    )
-    procedures.set_index([
-        'pd10',
-    ], inplace=True)
-
-    it = procedures.index.tolist()
-    it = auto.more_itertools.chunked(it, 900)
-
-    dfs = []
-    for pd10s in it:
-        df = auto.pd.read_sql_query(util.SQLQuery(r'''
-            SELECT
-                "icd10pcs"."pd10",
-                "icd10pcs"."desc"
-            FROM "icd10pcs"
-            WHERE "icd10pcs"."pd10" IN (
-                {%- set sep = joiner(",") %}
-                {%- for _ in pd10s %}
-                {{ sep() }} ?
-                {%- endfor %}
-            )
-            ORDER BY "icd10pcs"."pd10"
-        ''', pd10s=pd10s), database, params=pd10s, index_col='pd10')
-        dfs.append(df)
-
-    df = auto.pd.concat(dfs)
-    # /display df
-
-    procedures = procedures.join(df, how='left')
-    # /display procedures
-    
-    response.procedures.extend(util.starstarmap(dipResponseProceduresItem, procedures.replace({
-        auto.np.nan: None,
-    }).reset_index().to_dict(orient='records')))
 
     def scope():
         root = config.datadir
@@ -1473,23 +1583,18 @@ class dischargeResponse(auto.pydantic.BaseModel):
 async def discharge(
     *,
     hadm_id: str,
-    database: auto.typing.Annotated[
-        auto.sqlite3.Connection,
-        auto.fastapi.Depends(
-            Database,
-        ),
-    ],
 ) -> dischargeResponse:
-    sqlquery = util.SQLQuery(r'''
-        SELECT
-            "discharge"."hadm_id",
-            "discharge"."Brief Hospital Course"
-        FROM "discharge"
-        WHERE "discharge"."hadm_id" = ?
-    ''')
-    
-    df = auto.pd.read_sql_query(sqlquery, database, params=[hadm_id])
-    # /display df
+    with Database() as database:
+        sqlquery = util.SQLQuery(r'''
+            SELECT
+                "discharge"."hadm_id",
+                "discharge"."Brief Hospital Course"
+            FROM "discharge"
+            WHERE "discharge"."hadm_id" = ?
+        ''')
+        
+        df = auto.pd.read_sql_query(sqlquery, database, params=[hadm_id])
+        # /display df
     
     row = df.iloc[0]
     
