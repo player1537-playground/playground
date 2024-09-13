@@ -1,13 +1,11 @@
 <template>
+  <Header />
   <v-container fluid fill-height>
-    <Header />
-
     <v-main>
       <PatientsList />
     </v-main>
-
-    <Footer />
   </v-container>
+  <Footer />
 </template>
 
 <script setup>
