@@ -23,7 +23,12 @@ const router = createRouter({
       name: 'baz',
       component: () => import('./views/BazView.vue')
     },
-  ],
-});
+    {
+      path: '/:id',
+      name: 'Patient',
+      component: () => import('./views/PatientDetails.vue')
+    },
+  ]
+})
 
-export default router;
+export default router
