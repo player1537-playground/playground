@@ -4,7 +4,7 @@
       <v-skeleton-loader type="table-row@3"></v-skeleton-loader>
     </template>
     <template v-slot:item.actions="{ item }">
-      <v-btn @click="router.push({ path: '/', params: { id: item.hadm_id } })" color="primary" text>View</v-btn>
+      <v-btn @click="router.push({ name: 'Patient', params: { id: item.hadm_id } })" color="primary" text>View</v-btn>
     </template>
   </v-data-table>
 </template>
