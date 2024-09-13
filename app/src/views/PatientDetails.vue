@@ -1,48 +1,47 @@
 <template>
-<v-container fluid fill-height>
   <Header />
+  <v-container fluid fill-height>
+    <v-main>
+      <nav id="actions-toolbar">
+        <RouterLink to="/">Back to Visits</RouterLink>
 
-  <v-main>
-    <nav id="actions-toolbar">
-      <RouterLink to="/">Back to Visits</RouterLink>
+        <div class="button-group end">
+          <RouterLink to="/analyze">Analyze</RouterLink>
+          <RouterLink to="/foo">Recommend Diagnosis Codes</RouterLink>
+          <RouterLink to="/baz">Recommend Billing Codes</RouterLink>
+          <RouterLink to="/bar">Recommend SDOH Codes</RouterLink>
+        </div>
+      </nav>
 
-      <div class="button-group end">
-        <RouterLink to="/analyze">Analyze</RouterLink>"
-        <RouterLink to="/foo">Recommend Diagnosis Codes</RouterLink>
-        <RouterLink to="/baz">Recommend Billing Codes</RouterLink>
-        <RouterLink to="/bar">Recommend SDOH Codes</RouterLink>
+      <div>
+        <section id="patient-content">
+          <h3>Patient Information</h3>
+          <div id="patient-info"></div>
+        </section>
+
+        <section id="diagnoses-content">
+          <h3>Diagnoses</h3>
+          <ul id="diagnoses-list"></ul>
+        </section>
+
+        <section id="procedures-content">
+          <h3>Procedures</h3>
+          <ul id="procedures-list"></ul>
+        </section>
+
+        <section id="discharge-content">
+          <h3>Discharge Notes</h3>
+          <details>
+            <summary>Full Record</summary>
+            <textarea readonly></textarea>
+          </details>
+          <div id="discharge-notes"></div>
+        </section>
       </div>
-    </nav>
+    </v-main>
 
-    <div class="loader" :hidden="showSpinner"></div>
-
-    <section id="patient-content">
-      <h3>Patient Information</h3>
-      <div id="patient-info"></div>
-    </section>
-
-    <section id="diagnoses-content">
-      <h3>Diagnoses</h3>
-      <ul id="diagnoses-list"></ul>
-    </section>
-
-    <section id="procedures-content">
-      <h3>Procedures</h3>
-      <ul id="procedures-list"></ul>
-    </section>
-
-    <section id="discharge-content">
-      <h3>Discharge Notes</h3>
-      <details>
-        <summary>Full Record</summary>
-        <textarea readonly></textarea>
-      </details>
-      <div id="discharge-notes"></div>
-    </section>
-  </v-main>
-
+  </v-container>
   <Footer />
-</v-container>
 </template>
 
 <script setup>
@@ -51,74 +50,98 @@ import { useRoute } from 'vue-router';
 import Footer from '@/components/Footer.vue';
 import Header from '@/components/Header.vue';
 
-console.debug('BEGIN showVisitDetails', hadm_id);
-
 const loading = ref(true);
 const route = useRoute();
 const hadm_id = route.params.id;
 
-const [admission] = await fetch(`/admissions?hadm_id=${hadm_id}`);
-const [patient] = await fetchData(`/patients?subject_id=${admission.subject_id}`);
+console.debug('BEGIN showVisitDetails', hadm_id);
 
-document.getElementById('patient-info').innerHTML = `
-  <dl>
-      <dt>Patient ID</dt><dd>${patient.subject_id}</dd>
-      <dt>Gender</dt><dd>${patient.gender}</dd>
-      <dt>Age Group</dt><dd>${patient.anchor_age}</dd>
-      <dt>Anchor Year</dt><dd>${patient.anchor_year}</dd>
-      <dt>Date of Death</dt><dd>${patient.dod || 'N/A'}</dd>
-      <dt>Visit ID</dt><dd>${hadm_id}</dd>
-  </dl>
-`;
+loadData();
 
-const diagnoses = await fetchData(`/diagnoses?hadm_id=${hadm_id}`);
-const diagnosesList = document.getElementById('diagnoses-list');
-diagnosesList.innerHTML = '';
-diagnoses.forEach(diagnosis => {
-  const li = document.createElement('li');
-  li.textContent = `${diagnosis.dx10}`;
-  diagnosesList.appendChild(li);
-});
-
-const procedures = await fetchData(`/procedures?hadm_id=${hadm_id}`);
-const proceduresList = document.getElementById('procedures-list');
-proceduresList.innerHTML = '';
-procedures.forEach(procedure => {
-  const li = document.createElement('li');
-  li.textContent = `${procedure.pd10}`;
-  proceduresList.appendChild(li);
-});
-if (procedures.length === 0) {
-  const li = document.createElement('li');
-  li.textContent = 'No procedures recorded';
-  proceduresList.appendChild(li);
+async function fetchData(url) {
+  const response = await fetch(`https://olive.is.mediocreatbest.xyz/937506e2${url}`);
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return await response.json();
 }
 
-let discharges = await fetchData(`/discharges?hadm_id=${hadm_id}`);
-if (hadm_id == '27269506') {
-  discharges = [{ text: THE_GOOD_ONE }];
+async function loadData() {
+  try {
+    const [admission] = await fetchData(`/admissions?hadm_id=${hadm_id}`);
+    console.debug('admission', admission);
+    const [patient] = await fetchData(`/patients?subject_id=${admission.subject_id}`);
+    console.debug('patient', patient);
+
+    document.getElementById('patient-info').innerHTML = `
+      <dl>
+          <dt>Patient ID</dt><dd>${patient.subject_id}</dd>
+          <dt>Gender</dt><dd>${patient.gender}</dd>
+          <dt>Age Group</dt><dd>${patient.anchor_age}</dd>
+          <dt>Anchor Year</dt><dd>${patient.anchor_year}</dd>
+          <dt>Date of Death</dt><dd>${patient.dod || 'N/A'}</dd>
+          <dt>Visit ID</dt><dd>${hadm_id}</dd>
+      </dl>
+    `;
+  } catch (error) { }
+
+  try {
+    const diagnoses = await fetchData(`/diagnoses?hadm_id=${hadm_id}`);
+    console.debug('diagnoses', diagnoses);
+    const diagnosesList = document.getElementById('diagnoses-list');
+    diagnosesList.innerHTML = '';
+    diagnoses.forEach(diagnosis => {
+      const li = document.createElement('li');
+      li.textContent = `${diagnosis.dx10}`;
+      diagnosesList.appendChild(li);
+    });
+  } catch (error) { }
+
+  try {
+    const procedures = await fetchData(`/procedures?hadm_id=${hadm_id}`);
+    console.debug('procedures', procedures);
+    const proceduresList = document.getElementById('procedures-list');
+    proceduresList.innerHTML = '';
+    procedures.forEach(procedure => {
+      const li = document.createElement('li');
+      li.textContent = `${procedure.pd10}`;
+      proceduresList.appendChild(li);
+    });
+    if (procedures.length === 0) {
+      const li = document.createElement('li');
+      li.textContent = 'No procedures recorded';
+      proceduresList.appendChild(li);
+    }
+  } catch (error) { }
+
+  try {
+    let discharges = await fetchData(`/discharges?hadm_id=${hadm_id}`);
+    console.debug('discharges', discharges);
+    if (hadm_id == '27269506') {
+      discharges = [{ text: THE_GOOD_ONE }];
+    }
+    const dischargeNotes = document.getElementById('discharge-notes');
+    dischargeNotes.innerHTML = '';
+    discharges.forEach(note => {
+      const formattedText = formatDischargeNotes(note.text);
+      dischargeNotes.innerHTML += formattedText;
+    });
+  } catch (error) { }
+
+  // Setup Analyze button
+  // let analyzeBtnUrl = new URL('/analyze.html', window.location.href);
+  // analyzeBtnUrl.searchParams.set('hadm_id', hadm_id);
+  // analyzeBtn.href = analyzeBtnUrl.href;
+
+  // Setup Recommend Billing Codes button
+  //   let bazBtn = document.getElementById('bazBtn');
+  //   let bazBtnUrl = new URL('https://red.is.mediocreatbest.xyz/baz/');
+  //   bazBtnUrl.searchParams.set('dx', diagnoses.map(d => d.dx10).join(','));
+  //   bazBtnUrl.searchParams.set('pd', procedures.map(p => p.pd10).join(','));
+  //   bazBtn.href = bazBtnUrl.href;
 }
-const dischargeNotes = document.getElementById('discharge-notes');
-dischargeNotes.innerHTML = '';
-discharges.forEach(note => {
-  const formattedText = formatDischargeNotes(note.text);
-  dischargeNotes.innerHTML += formattedText;
-});
-
-// Setup Analyze button
-let analyzeBtnUrl = new URL('/analyze.html', window.location.href);
-analyzeBtnUrl.searchParams.set('hadm_id', hadm_id);
-analyzeBtn.href = analyzeBtnUrl.href;
-
-// Setup Recommend Billing Codes button
-let bazBtn = document.getElementById('bazBtn');
-let bazBtnUrl = new URL('https://red.is.mediocreatbest.xyz/baz/');
-bazBtnUrl.searchParams.set('dx', diagnoses.map(d => d.dx10).join(','));
-bazBtnUrl.searchParams.set('pd', procedures.map(p => p.pd10).join(','));
-bazBtn.href = bazBtnUrl.href;
 
 function formatDischargeNotes(text) {
-  return;
   document.querySelector('#discharge-content details textarea').value = text;
 
   const lines = text.split('\n');
