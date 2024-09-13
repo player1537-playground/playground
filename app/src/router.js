@@ -1,8 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import HelloView from './views/HelloView.vue';
-import FooView from './views/FooView.vue';
-import BarView from './views/BarView.vue';
-import BazView from './views/BazView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -15,17 +11,17 @@ const router = createRouter({
     {
       path: '/foo/',
       name: 'foo',
-      component: FooView,
+      component: () => import('./views/FooView.vue')
     },
     {
       path: '/bar/',
       name: 'bar',
-      component: BarView,
+      component: () => import('./views/BarView.vue')
     },
     {
       path: '/baz/',
       name: 'baz',
-      component: BazView,
+      component: () => import('./views/BazView.vue')
     },
   ],
 });
