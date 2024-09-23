@@ -12,3 +12,4 @@ beautifulsoup4
 lxml
 uvicorn
 jinja2
+pyarrow

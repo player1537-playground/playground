@@ -19,6 +19,7 @@ dependencies = [
     "more_itertools",
     "geopandas",
     "matplotlib",
+    "pyarrow",
 ]
 
 [tool.setuptools.package-data]

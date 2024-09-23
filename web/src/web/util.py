@@ -2068,3 +2068,182 @@ SQLQuery.verbose = SQLQuery_verbose
 def starstarmap(function, iterable):
     for kwargs in iterable:
         yield function(**kwargs)
+
+
+__UnderpaymentModel = auto.typing.NamedTuple('Model', [
+    ('N', auto.pd.DataFrame),
+    ('μ', auto.pd.DataFrame),
+    ('σ', auto.pd.DataFrame),
+])
+
+@auto.functools.cache
+def UnderpaymentModel(
+    *,
+    path: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    root: auto.pathlib.Path | auto.typing.Literal[...] = ...,
+    name: str | auto.typing.Literal[...] = ...,
+
+    kind: auto.typing.Literal['mult', 'cost'] | None = None,
+    pred: auto.typing.Literal['DX1', 'DX2', 'DX3', 'PD1', 'PD2', 'PD3'] | None = None,
+    prod: auto.typing.Literal['DX1', 'DX2', 'DX3', 'PD1', 'PD2', 'PD3'] | None = None,
+) -> __UnderpaymentModel:
+    if path is ...:
+        if root is ...:
+            root = config.datadir
+        if name is ...:
+            assert kind is not None
+            assert pred is not None
+            assert prod is not None
+            name = f'Underpayment.{kind}.{pred}-{prod}.zip'
+        path = root / name
+
+    root = auto.zipfile.Path(path)
+
+    with (root / 'N.feather').open('rb') as f:
+        N = auto.pd.read_feather(f)
+    
+    with (root / 'μ.feather').open('rb') as f:
+        μ = auto.pd.read_feather(f)
+    
+    with (root / 'σ.feather').open('rb') as f:
+        σ = auto.pd.read_feather(f)
+
+    with auto.warnings.catch_warnings():
+        auto.warnings.simplefilter('ignore', FutureWarning)
+
+        N = N.replace({ None: auto.np.nan })
+        μ = μ.replace({ None: auto.np.nan })
+        σ = σ.replace({ None: auto.np.nan })
+
+    return __UnderpaymentModel(
+        N = N,
+        μ = μ,
+        σ = σ,
+    )
+
+
+__UnderpaymentItemItemItem = auto.typing.TypedDict('UnderpaymentItem', {
+    'avg': float,
+    'std': float,
+})
+__UnderpaymentItemItem = auto.typing.TypedDict('UnderpaymentItem', {
+    'tight': __UnderpaymentItemItemItem,
+    'loose': __UnderpaymentItemItemItem,
+})
+__UnderpaymentItem = auto.typing.TypedDict('UnderpaymentItem', {
+    'lo': __UnderpaymentItemItem,
+    'hi': __UnderpaymentItemItem,
+})
+__Underpayment = auto.typing.TypedDict('Underpayment', {
+    'cost': __UnderpaymentItem,
+    'mult': __UnderpaymentItem,
+})
+
+def Underpayment(
+    *,
+    icd10cm: auto.pd.DataFrame,
+    icd10pcs: auto.pd.DataFrame,
+
+    dxs: list[str],
+    pds: list[str],
+    ndx: auto.typing.Literal[1, 2, 3],
+    npd: auto.typing.Literal[1, 2, 3],
+) -> __Underpayment:
+    icd10cm = icd10cm[icd10cm.index.str.len() == ndx]
+    icd10pcs = icd10pcs[icd10pcs.index.str.len() == npd]
+
+    mult = UnderpaymentModel(
+        kind = 'mult',
+        pred = f'DX{ndx}',
+        prod = f'PD{npd}',
+    )
+    cost = UnderpaymentModel(
+        kind = 'cost',
+        pred = f'DX{ndx}',
+        prod = f'PD{npd}',
+    )
+
+    dxs = [dx[:ndx] for dx in dxs if dx[:ndx] in icd10cm.index]
+    pds = [pd[:npd] for pd in pds if pd[:npd] in icd10pcs.index]
+
+    cµs = []
+    cσs = []
+    mµs = []
+    mσs = []
+    for dx, pd in auto.itertools.product(dxs, pds):
+        cµ = cost.μ.loc[dx, pd]
+        cσ = cost.σ.loc[dx, pd]
+        mµ = mult.μ.loc[dx, pd]
+        mσ = mult.σ.loc[dx, pd]
+
+        if auto.pd.isna(cµ): print('a'); continue
+        if auto.pd.isna(cσ): print('b'); continue
+        if auto.pd.isna(mµ): print('c'); continue
+        if auto.pd.isna(mσ): print('d'); continue
+
+        cµs.append(cµ)
+        cσs.append(cσ)
+        mµs.append(mµ)
+        mσs.append(mσ)
+
+    # /auto.pprint.pp cµs
+    # /auto.pprint.pp cσs
+    # /auto.pprint.pp mµs
+    # /auto.pprint.pp mσs
+
+    cµlo = auto.np.min(cµs)
+    cµhi = auto.np.max(cµs)
+    mµlo = auto.np.min(mµs)
+    mµhi = auto.np.max(mµs)
+
+    cσlo = auto.np.min(cσs)
+    cσhi = auto.np.max(cσs)
+    mσlo = auto.np.min(mσs)
+    mσhi = auto.np.max(mσs)
+
+    return __Underpayment(
+        cost = __UnderpaymentItem(
+            lo = __UnderpaymentItemItem(
+                tight = __UnderpaymentItemItemItem(
+                    avg = cµlo,
+                    std = cσlo,
+                ),
+                loose = __UnderpaymentItemItemItem(
+                    avg = cµlo,
+                    std = cσhi,
+                ),
+            ),
+            hi = __UnderpaymentItemItem(
+                tight = __UnderpaymentItemItemItem(
+                    avg = cµhi,
+                    std = cσlo,
+                ),
+                loose = __UnderpaymentItemItemItem(
+                    avg = cµhi,
+                    std = cσhi,
+                ),
+            ),
+        ),
+        mult = __UnderpaymentItem(
+            lo = __UnderpaymentItemItem(
+                tight = __UnderpaymentItemItemItem(
+                    avg = mµlo,
+                    std = mσlo,
+                ),
+                loose = __UnderpaymentItemItemItem(
+                    avg = mµlo,
+                    std = mσhi,
+                ),
+            ),
+            hi = __UnderpaymentItemItem(
+                tight = __UnderpaymentItemItemItem(
+                    avg = mµhi,
+                    std = mσlo,
+                ),
+                loose = __UnderpaymentItemItemItem(
+                    avg = mµhi,
+                    std = mσhi,
+                ),
+            ),
+        ),
+    )

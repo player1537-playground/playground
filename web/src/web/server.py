@@ -1605,6 +1605,44 @@ async def discharge(
     
     return response
 
+
+class underpaymentRequest(auto.pydantic.BaseModel):
+    dxs: list[str]
+    pds: list[str]
+    ndx: auto.typing.Literal[1, 2, 3]
+    npd: auto.typing.Literal[1, 2, 3]
+
+
+@app.post('/underpayment/')
+def underpayment(
+    *,
+    request: underpaymentRequest,
+    icd10cm: auto.typing.Annotated[
+        auto.pd.DataFrame,
+        auto.fastapi.Depends(
+            ICD10CM,
+        ),
+    ],
+    icd10pcs: auto.typing.Annotated[
+        auto.pd.DataFrame,
+        auto.fastapi.Depends(
+            ICD10PCS,
+        ),
+    ],
+) -> dict:
+    underpayment = util.Underpayment(
+        dxs=request.dxs,
+        pds=request.pds,
+        ndx=request.ndx,
+        npd=request.npd,
+        
+        icd10cm=icd10cm,
+        icd10pcs=icd10pcs,
+    )
+    
+    return underpayment
+
+
 @app.get("/")
 async def index():
     return {"Hello": "World"}
