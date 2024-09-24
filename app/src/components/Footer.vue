@@ -1,5 +1,5 @@
 <template>
-  <v-footer class="flex-wrap py-5" color="primary">
+  <v-footer class="flex-wrap py-5" color="primary" height="unset">
     <v-row justify="center" class="w-100">
       <v-col class="text-center pb-0" cols="12">
         <p><strong>&copy;{{ new Date().getFullYear() }}</strong> Visualiz.AI All rights reserved.</p>

@@ -1,7 +1,7 @@
 <template>
   <Header />
-  <v-container fluid fill-height>
-    <v-main>
+  <v-container fluid class="fill-height">
+    <v-main class="fill-height">
       <nav id="actions-toolbar">
         <RouterLink to="/">Back to Visits</RouterLink>
 
