@@ -3,41 +3,64 @@
   <v-container fluid class="fill-height">
     <v-main class="fill-height">
       <nav id="actions-toolbar">
-        <RouterLink to="/">Back to Visits</RouterLink>
+        <v-btn @click="router.back()" color="primary" text>Back to Visits</v-btn>
 
         <div class="button-group end">
-          <RouterLink to="/analyze">Analyze</RouterLink>
-          <RouterLink to="/foo">Recommend Diagnosis Codes</RouterLink>
-          <RouterLink to="/baz">Recommend Billing Codes</RouterLink>
-          <RouterLink to="/bar">Recommend SDOH Codes</RouterLink>
+          <v-btn color="primary" :to="analyzeBtnUrl">Analyze</v-btn>
+          <v-btn color="primary" to="/foo/">Recommend Diagnosis Codes</v-btn>
+          <v-btn color="primary" to="/baz/">Recommend Billing Codes</v-btn>
+          <v-btn color="primary" to="/bar/">Recommend SDOH Codes</v-btn>
         </div>
       </nav>
 
-      <div>
-        <section id="patient-content">
-          <h3>Patient Information</h3>
-          <div id="patient-info"></div>
-        </section>
+      <v-row>
+        <v-col cols="12" md="4">
+          <v-card class="fill-height">
+            <v-card-item>
+              <v-card-title>Patient Information</v-card-title>
+            </v-card-item>
 
-        <section id="diagnoses-content">
-          <h3>Diagnoses</h3>
-          <ul id="diagnoses-list"></ul>
-        </section>
+            <v-card-text>
+              <div id="patient-info"></div>
+            </v-card-text>
+          </v-card>
+        </v-col>
 
-        <section id="procedures-content">
-          <h3>Procedures</h3>
-          <ul id="procedures-list"></ul>
-        </section>
+        <v-col cols="12" md="4">
+          <v-card class="fill-height">
+            <v-card-item>
+              <v-card-title>Diagnoses</v-card-title>
+            </v-card-item>
 
-        <section id="discharge-content">
+            <v-card-text>
+              <ul id="diagnoses-list"></ul>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" md="4">
+          <v-card class="fill-height">
+            <v-card-item>
+              <v-card-title>Procedures</v-card-title>
+            </v-card-item>
+
+            <v-card-text>
+              <ul id="procedures-list"></ul>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <v-row>
+        <v-col>
           <h3>Discharge Notes</h3>
           <details>
             <summary>Full Record</summary>
             <textarea readonly></textarea>
           </details>
           <div id="discharge-notes"></div>
-        </section>
-      </div>
+        </v-col>
+      </v-row>
     </v-main>
 
   </v-container>
@@ -46,13 +69,16 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import Footer from '@/components/Footer.vue';
 import Header from '@/components/Header.vue';
 
 const loading = ref(true);
+const router = useRouter();
 const route = useRoute();
 const hadm_id = route.params.id;
+
+const analyzeBtnUrl = ref(`/analyze/${hadm_id}`);
 
 console.debug('BEGIN showVisitDetails', hadm_id);
 
