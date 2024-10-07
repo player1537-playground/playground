@@ -1,7 +1,7 @@
 <template>
-  <v-app-bar app color="primary">
+  <v-app-bar color="primary">
     <template v-slot:prepend>
-      <v-img :src="logo_white" class="header-logo mx-4" height="32" width="128"></v-img>
+      <router-link to="/"><v-img :to="{ name: 'Patients' }" :src="logo_white" class="header-logo mx-4" height="32" width="128"></v-img></router-link>
     </template>
   </v-app-bar>
 </template>
