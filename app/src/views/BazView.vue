@@ -1,232 +1,195 @@
 <template>
-     <div style="height: 5rem"></div>
+  <div style="height: 5rem"></div>
 
-    <!-- <v-row>
+  <!-- <v-row>
       <v-col cols=12 class=outline style="margin-bottom: 1rem">
         <h3>Patient Visit Summary</h3>
         <v-textarea v-model="summary" outlined full-width rows="6"></v-textarea>
       </v-col>
     </v-row> -->
 
-    <v-row>
-      <v-col cols="6">
-        <v-row>
-          <v-col offset=1 cols=10
-            :class="{ outline: true, flash: flashDiagnosticSearch }"
-            @animationend="flashDiagnosticSearch = false"
-          >
-            <h3>Search Diagnostic Codes</h3>
-            <v-text-field v-model="diagnosticSearch" outlined full-width
-              @keyup.enter="bing"
-            >
-            </v-text-field>
+  <v-row>
+    <v-col cols="6">
+      <v-row class="d-none">
+        <v-col offset=1 cols=10 :class="{ outline: true, flash: flashDiagnosticSearch }"
+          @animationend="flashDiagnosticSearch = false">
+          <h3>Search Diagnostic Codes</h3>
+          <v-text-field v-model="diagnosticSearch" outlined full-width @keyup.enter="bing">
+          </v-text-field>
 
-            <v-col cols=12>
-              <v-btn color="primary" block
-                @click="bing"
-              >
-                <v-icon class="search-icon">mdi-magnify</v-icon>
-              </v-btn>
+          <v-col cols=12>
+            <v-btn color="primary" block @click="bing">
+              <v-icon class="search-icon">mdi-magnify</v-icon>
+            </v-btn>
+          </v-col>
+
+        </v-col>
+      </v-row>
+    </v-col>
+    <v-col cols=6>
+      <v-row class="d-none">
+        <v-col offset=1 cols=10 :class="{ outline: true, flash: flashProcedureSearch }"
+          @animationend="flashProcedureSearch = false">
+          <h3>Search Procedure Codes</h3>
+          <v-text-field v-model="procedureSearch" outlined full-width @keyup.enter="ping">
+          </v-text-field>
+
+          <v-col cols=12>
+            <v-btn color="primary" block @click="ping">
+              <v-icon class="search-icon">mdi-magnify</v-icon>
+            </v-btn>
+          </v-col>
+
+        </v-col>
+      </v-row>
+    </v-col>
+  </v-row>
+
+  <v-row>
+    <v-col cols="12">
+
+      <div style="height: 1rem"></div>
+
+      <v-row>
+        <v-col cols=6>
+          <v-row>
+            <v-col offset="1" cols="10" :class="{ outline: true, flash: flashDiagnosticCodes }"
+              @animationend="flashDiagnosticCodes = false">
+              <h3>Selected Diagnostic Codes</h3>
+              <v-list class="limitHeight">
+                <v-list-item v-for="(dx, index) in diagnosticCodes" :key="index">
+                  <template v-slot:prepend="{ isActive }">
+                    <v-btn variant="outlined" @click="diagnosticCodes.splice(index, 1)">
+                      <v-icon>mdi-minus</v-icon>
+                    </v-btn>
+                    <v-btn variant="outlined" @click="foo(dx)">
+                      <v-icon>mdi-source-branch</v-icon>
+                      <v-tooltip activator=parent location=end>
+                        Recommend Similar-in-Meaning DX Codes
+                      </v-tooltip>
+                    </v-btn>
+                    <!-- XXX(th): Do this without nbsp; -->
+                    <pre>  </pre>
+                  </template>
+                  <v-list-item-title>{{ dx.dx }}: {{ dx.desc }}</v-list-item-title>
+                </v-list-item>
+              </v-list>
+
+
+              <div style="height: 1rem"></div>
+
+            </v-col>
+          </v-row>
+        </v-col>
+        <v-col cols=6>
+          <v-row>
+            <v-col offset="1" cols="10" :class="{ outline: true, flash: flashProcedureCodes }"
+              @animationend="flashProcedureCodes = false">
+              <h3>Selected Procedure Codes</h3>
+              <v-list class="limitHeight">
+                <v-list-item v-for="(pd, index) in procedureCodes" :key="index">
+                  <template v-slot:prepend="{ isActive }">
+                    <v-btn variant="outlined" @click="procedureCodes.splice(index, 1)">
+                      <v-icon>mdi-minus</v-icon>
+                    </v-btn>
+                    <v-btn variant="outlined" @click="bar(pd)">
+                      <v-icon>mdi-source-branch</v-icon>
+                      <v-tooltip activator=parent location=end>
+                        Recommend Similar-in-Meaning PD Codes
+                      </v-tooltip>
+                    </v-btn>
+                    <!-- XXX(th): Do this without nbsp; -->
+                    <pre>  </pre>
+                  </template>
+                  <v-list-item-title>{{ pd.pd }}: {{ pd.desc }}</v-list-item-title>
+                </v-list-item>
+              </v-list>
+
+
+
+              <div style="height: 1rem"></div>
+
+            </v-col>
+          </v-row>
+        </v-col>
+      </v-row>
+    </v-col>
+  </v-row>
+
+  <v-row>
+    <v-col cols="12">
+
+      <div style="height: 1rem"></div>
+
+      <v-row>
+        <v-col cols=6>
+          <v-row>
+            <v-col offset=1 cols="10" :class="{ outline: true, flash: flashRecommendedDiagnosticCodes }"
+              @animationend="flashRecommendedDiagnosticCodes = false">
+              <h3>Recommended Diagnostic Codes</h3>
+              <v-list class="limitHeight">
+                <v-list-item v-for="(dx, index) in recommendedDiagnosticCodes" :key="index">
+                  <template v-slot:prepend="{ isActive }">
+                    <v-btn variant="outlined" @click="diagnosticCodes.push(dx)">
+                      <v-icon>mdi-plus</v-icon>
+                    </v-btn>
+                    <!-- XXX(th): Do this without nbsp; -->
+                    <pre>  </pre>
+                  </template>
+                  <v-list-item-title>{{ dx.dx }}: {{ dx.desc }}</v-list-item-title>
+                </v-list-item>
+              </v-list>
+
+              <div style="height: 1rem"></div>
+
+              <v-row>
+                <v-col cols="6">
+                  <v-btn color="primary" block @click="dx2dx">DX Codes Recommend DX Codes</v-btn>
+                </v-col>
+                <v-col cols="6">
+                  <v-btn color="primary" block @click="pd2dx">PD Codes Recommend DX Codes</v-btn>
+                </v-col>
+              </v-row>
+
             </v-col>
 
-          </v-col>
-        </v-row>
-      </v-col>
-      <v-col cols=6>
-        <v-row>
-          <v-col offset=1 cols=10
-            :class="{ outline: true, flash: flashProcedureSearch }"
-            @animationend="flashProcedureSearch = false"
-          >
-            <h3>Search Procedure Codes</h3>
-            <v-text-field v-model="procedureSearch" outlined full-width
-              @keyup.enter="ping"
-            >
-            </v-text-field>
+          </v-row>
+        </v-col>
+        <v-col cols=6>
+          <v-row>
+            <v-col offset=1 cols="10" :class="{ outline: true, flash: flashRecommendedProcedureCodes }"
+              @animationend="flashRecommendedProcedureCodes = false">
+              <h3>Recommended Procedure Codes</h3>
+              <v-list class="limitHeight">
+                <v-list-item v-for="(pd, index) in recommendedProcedureCodes" :key="index">
+                  <template v-slot:prepend="{ isActive }">
+                    <v-btn variant="outlined" @click="procedureCodes.push(pd)">
+                      <v-icon>mdi-plus</v-icon>
+                    </v-btn>
+                    <!-- XXX(th): Do this without nbsp; -->
+                    <pre>  </pre>
+                  </template>
+                  <v-list-item-title>{{ pd.pd }}: {{ pd.desc }}</v-list-item-title>
+                </v-list-item>
+              </v-list>
 
-            <v-col cols=12>
-              <v-btn color="primary" block
-                @click="ping"
-              >
-                <v-icon class="search-icon">mdi-magnify</v-icon>
-              </v-btn>
+              <div style="height: 1rem"></div>
+
+              <v-row>
+                <v-col cols="6">
+                  <v-btn color="primary" block @click="dx2pd">DX Codes Recommend PD Codes</v-btn>
+                </v-col>
+                <v-col cols="6">
+                  <v-btn color="primary" block @click="pd2pd">PD Codes Recommend PD Codes</v-btn>
+                </v-col>
+              </v-row>
+
             </v-col>
-            
-          </v-col>
-        </v-row>
-      </v-col>
-    </v-row>
-
-    <v-row>
-      <v-col cols="12">
-
-        <div style="height: 1rem"></div>
-
-        <v-row>
-          <v-col cols=6>
-            <v-row>
-              <v-col offset="1" cols="10"
-                :class="{ outline: true, flash: flashDiagnosticCodes }"
-                @animationend="flashDiagnosticCodes = false"
-              >
-                <h3>Selected Diagnostic Codes</h3>
-                <v-list class="limitHeight">
-                  <v-list-item v-for="(dx, index) in diagnosticCodes" :key="index">
-                    <template v-slot:prepend="{ isActive }">
-                      <v-btn variant="outlined"
-                        @click="diagnosticCodes.splice(index, 1)"
-                      >
-                        <v-icon>mdi-minus</v-icon>
-                      </v-btn>
-                      <v-btn variant="outlined"
-                        @click="foo(dx)"
-                      >
-                        <v-icon>mdi-source-branch</v-icon>
-                        <v-tooltip activator=parent location=end>
-                          Recommend Similar-in-Meaning DX Codes
-                        </v-tooltip>
-                      </v-btn>
-                      <!-- XXX(th): Do this without nbsp; -->
-                      <pre>  </pre>
-                    </template>
-                    <v-list-item-title>{{ dx.dx }}: {{ dx.desc }}</v-list-item-title>
-                  </v-list-item>
-                </v-list>
-
-
-                <div style="height: 1rem"></div>
-
-              </v-col>
-            </v-row>
-          </v-col>
-          <v-col cols=6>
-            <v-row>
-              <v-col offset="1" cols="10"
-                :class="{ outline: true, flash: flashProcedureCodes }"
-                @animationend="flashProcedureCodes = false"
-              >
-                <h3>Selected Procedure Codes</h3>
-                <v-list class="limitHeight">
-                  <v-list-item v-for="(pd, index) in procedureCodes" :key="index">
-                    <template v-slot:prepend="{ isActive }">
-                      <v-btn variant="outlined"
-                        @click="procedureCodes.splice(index, 1)"
-                      >
-                        <v-icon>mdi-minus</v-icon>
-                      </v-btn>
-                      <v-btn variant="outlined"
-                        @click="bar(pd)"
-                      >
-                        <v-icon>mdi-source-branch</v-icon>
-                        <v-tooltip activator=parent location=end>
-                          Recommend Similar-in-Meaning PD Codes
-                        </v-tooltip>
-                      </v-btn>
-                      <!-- XXX(th): Do this without nbsp; -->
-                      <pre>  </pre>
-                    </template>
-                    <v-list-item-title>{{ pd.pd }}: {{ pd.desc }}</v-list-item-title>
-                  </v-list-item>
-                </v-list>
-
-
-
-                <div style="height: 1rem"></div>
-
-              </v-col>
-            </v-row>
-          </v-col>
-        </v-row>
-      </v-col>
-    </v-row>
-
-    <v-row>
-      <v-col cols="12">
-
-        <div style="height: 1rem"></div>
-
-        <v-row>
-          <v-col cols=6>
-            <v-row>
-              <v-col offset=1 cols="10"
-                :class="{ outline: true, flash: flashRecommendedDiagnosticCodes }"
-                @animationend="flashRecommendedDiagnosticCodes = false"
-              >
-                <h3>Recommended Diagnostic Codes</h3>
-                <v-list class="limitHeight">
-                  <v-list-item v-for="(dx, index) in recommendedDiagnosticCodes" :key="index">
-                    <template v-slot:prepend="{ isActive }">
-                      <v-btn variant="outlined"
-                        @click="diagnosticCodes.push(dx)"
-                      >
-                        <v-icon>mdi-plus</v-icon>
-                      </v-btn>
-                      <!-- XXX(th): Do this without nbsp; -->
-                      <pre>  </pre>
-                    </template>
-                    <v-list-item-title>{{ dx.dx }}: {{ dx.desc }}</v-list-item-title>
-                  </v-list-item>
-                </v-list>
-
-                <div style="height: 1rem"></div>
-
-                <v-row>
-                  <v-col cols="6">
-                    <v-btn color="primary" block
-                      @click="dx2dx"
-                    >DX Codes Recommend DX Codes</v-btn>
-                  </v-col>
-                  <v-col cols="6">
-                    <v-btn color="primary" block
-                      @click="pd2dx"
-                    >PD Codes Recommend DX Codes</v-btn>
-                  </v-col>
-                </v-row>
-
-              </v-col>
-
-            </v-row>
-          </v-col>
-          <v-col cols=6>
-            <v-row>
-              <v-col offset=1 cols="10" :class="{ outline: true, flash: flashRecommendedProcedureCodes }" @animationend="flashRecommendedProcedureCodes = false">
-                <h3>Recommended Procedure Codes</h3>
-                <v-list class="limitHeight">
-                  <v-list-item v-for="(pd, index) in recommendedProcedureCodes" :key="index">
-                    <template v-slot:prepend="{ isActive }">
-                      <v-btn variant="outlined"
-                        @click="procedureCodes.push(pd)"
-                      >
-                        <v-icon>mdi-plus</v-icon>
-                      </v-btn>
-                      <!-- XXX(th): Do this without nbsp; -->
-                      <pre>  </pre>
-                    </template>
-                    <v-list-item-title>{{ pd.pd }}: {{ pd.desc }}</v-list-item-title>
-                  </v-list-item>
-                </v-list>
-
-                <div style="height: 1rem"></div>
-
-                <v-row>
-                  <v-col cols="6">
-                    <v-btn color="primary" block
-                      @click="dx2pd"
-                    >DX Codes Recommend PD Codes</v-btn>
-                  </v-col>
-                  <v-col cols="6">
-                    <v-btn color="primary" block
-                      @click="pd2pd"
-                    >PD Codes Recommend PD Codes</v-btn>
-                  </v-col>
-                </v-row>
-
-              </v-col>
-            </v-row>
-          </v-col>
-        </v-row>
-      </v-col>
-    </v-row>
+          </v-row>
+        </v-col>
+      </v-row>
+    </v-col>
+  </v-row>
 </template>
 
 <script>
@@ -277,11 +240,11 @@ export default defineComponent({
     if (this.$route.query.hasOwnProperty('dx')) {
       diagnosticCodes.splice(0);
       if (this.$route.query.dx)
-      for (let dx of this.$route.query.dx.split(',')) {
-        let desc = ICD10CM[dx];
-        dx = dx.substring(0, 4);
-        diagnosticCodes.push({ dx, desc });
-      }
+        for (let dx of this.$route.query.dx.split(',')) {
+          let desc = ICD10CM[dx];
+          dx = dx.substring(0, 4);
+          diagnosticCodes.push({ dx, desc });
+        }
     }
 
     let procedureCodes = (
@@ -292,11 +255,11 @@ export default defineComponent({
     if (this.$route.query.hasOwnProperty('pd')) {
       procedureCodes.splice(0);
       if (this.$route.query.pd)
-      for (let pd of this.$route.query.pd.split(',')) {
-        let desc = ICD10PCS[pd];
-        pd = pd.substring(0, 3);
-        procedureCodes.push({ pd, desc });
-      }
+        for (let pd of this.$route.query.pd.split(',')) {
+          let desc = ICD10PCS[pd];
+          pd = pd.substring(0, 3);
+          procedureCodes.push({ pd, desc });
+        }
     }
 
     return {
@@ -606,7 +569,7 @@ export default defineComponent({
         });
       }
     },
-  
+
   },
 
 });
@@ -619,26 +582,29 @@ export default defineComponent({
   overflow-y: scroll;
   box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
 }
+
 @keyframes flash {
   0% {
     background-color: transparent;
   }
+
   50% {
     background-color: yellow;
   }
+
   100% {
     background-color: transparent;
   }
 }
+
 .flash {
   animation: flash 0.5s ease-out;
 }
+
 .outline {
   border: 1px solid #707D87;
   border-radius: 0.5rem;
   padding: 1rem;
   background-color: rgb(var(--v-theme-surface-light));
-}
-.main {
 }
 </style>

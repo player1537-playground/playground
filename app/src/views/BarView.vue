@@ -1,77 +1,46 @@
 <template>
-   <div style="height: 3rem"></div>
+  <div style="height: 3rem"></div>
 
   <div class="grid">
     <div class="a">
 
-      <v-expansion-panels
-        multiple
-      >
-        <v-expansion-panel
-          v-for="whatever in whatevers"
-          style="padding-right: 0;"
-        >
+      <v-expansion-panels multiple>
+        <v-expansion-panel v-for="whatever in whatevers" style="padding-right: 0;">
           <v-expansion-panel-title>
             <template #actions>
-              <v-btn
-                @click.stop="show('whatever', whatever.identity)"
-              >
-                <v-icon
-                  icon=mdi-eye-arrow-right
-                  :color="overrideValues.get(whatever.identity) ? 'default' : 'grey'"
-                ></v-icon>
+              <v-btn @click.stop="show('whatever', whatever.identity)">
+                <v-icon icon=mdi-eye-arrow-right
+                  :color="overrideValues.get(whatever.identity) ? 'default' : 'grey'"></v-icon>
               </v-btn>
             </template>
 
             {{ whatever.identity }}
           </v-expansion-panel-title>
           <v-expansion-panel-text>
-            <v-expansion-panels
-              multiple
-            >
-              <v-expansion-panel
-                v-for="magazine in whatever.magazines"
-                :key="magazine.identity"
-              >
+            <v-expansion-panels multiple>
+              <v-expansion-panel v-for="magazine in whatever.magazines" :key="magazine.identity">
                 <v-expansion-panel-title>
                   <template #actions>
-                    <v-btn
-                      @click.stop="show('magazine', whatever.identity, magazine.identity)"
-                    >
-                      <v-icon
-                        icon=mdi-eye-arrow-right
-                        :color="overrideValues.get(whatever.identity + '-' + magazine.identity) ? 'default' : 'grey'"
-                      ></v-icon>
+                    <v-btn @click.stop="show('magazine', whatever.identity, magazine.identity)">
+                      <v-icon icon=mdi-eye-arrow-right
+                        :color="overrideValues.get(whatever.identity + '-' + magazine.identity) ? 'default' : 'grey'"></v-icon>
                     </v-btn>
                   </template>
 
                   {{ magazine.identity }}
                 </v-expansion-panel-title>
                 <v-expansion-panel-text>
-                  <v-slider
-                    :model-value="sliderValues.get(whatever.identity + '-' + magazine.identity)"
+                  <v-slider :model-value="sliderValues.get(whatever.identity + '-' + magazine.identity)"
                     @update:model-value="v => sliderValues.set(whatever.identity + '-' + magazine.identity, v)"
-                    :min=-1.5
-                    :max=1.5
-                    :step=0.1
-                    thumb-label="always"
-                    show-ticks
-                    style="margin-left: 1rem; margin-right: 1rem; margin-top: 0.5rem;"
-                  ></v-slider>
+                    :min=-1.5 :max=1.5 :step=0.1 thumb-label="always" show-ticks
+                    style="margin-left: 1rem; margin-right: 1rem; margin-top: 0.5rem;"></v-slider>
 
                   <v-list>
-                    <v-list-item
-                      v-for="property in magazine.properties" 
-                      :key="property.identity"
-                    >
+                    <v-list-item v-for="property in magazine.properties" :key="property.identity">
                       <template #append>
-                        <v-btn
-                          @click.stop="show('property', whatever.identity, magazine.identity, property.identity)"
-                        >
-                          <v-icon
-                            icon=mdi-eye-arrow-right
-                            :color="overrideValues.get(whatever.identity + '-' + magazine.identity + '-' + property.identity) ? 'default' : 'grey'"
-                          ></v-icon>
+                        <v-btn @click.stop="show('property', whatever.identity, magazine.identity, property.identity)">
+                          <v-icon icon=mdi-eye-arrow-right
+                            :color="overrideValues.get(whatever.identity + '-' + magazine.identity + '-' + property.identity) ? 'default' : 'grey'"></v-icon>
                         </v-btn>
                       </template>
 
@@ -79,13 +48,8 @@
                       <v-slider
                         :model-value="sliderValues.get(whatever.identity + '-' + magazine.identity + '-' + property.identity)"
                         @update:model-value="v => sliderValues.set(whatever.identity + '-' + magazine.identity + '-' + property.identity, v)"
-                        :min=-1.5
-                        :max=1.5
-                        :step=0.1
-                        thumb-label="always"
-                        show-ticks
-                        style="margin-left: 1rem; margin-right: 1rem; margin-top: 0.5rem;"
-                      ></v-slider>
+                        :min=-1.5 :max=1.5 :step=0.1 thumb-label="always" show-ticks
+                        style="margin-left: 1rem; margin-right: 1rem; margin-top: 0.5rem;"></v-slider>
                     </v-list-item>
                   </v-list>
                 </v-expansion-panel-text>
@@ -97,7 +61,7 @@
       </v-expansion-panels>
     </div>
     <div class="b">
-      <canvas :width=1600*2/3 :height=900*2/3 ref="geograph"></canvas>
+      <canvas :width="1600 * 2 / 3" :height="900 * 2 / 3" ref="geograph"></canvas>
     </div>
     <div class="c">
     </div>
@@ -332,7 +296,7 @@ export default defineComponent({
             }
           }
         }
-      
+
       } else if (kind === 'property') {
         let [whateverIdentity, magazineIdentity, propertyIdentity] = identities;
 
@@ -403,15 +367,15 @@ export default defineComponent({
               identity: magazine.identity,
               multiply: (
                 this.overrideValues.get(whatever.identity + '-' + magazine.identity)
-                ? this.sliderValues.get(whatever.identity + '-' + magazine.identity)
-                : 0.0
+                  ? this.sliderValues.get(whatever.identity + '-' + magazine.identity)
+                  : 0.0
               ),
               properties: magazine.properties.map(property => ({
                 identity: property.identity,
                 multiply: (
                   this.overrideValues.get(whatever.identity + '-' + magazine.identity + '-' + property.identity)
-                  ? this.sliderValues.get(whatever.identity + '-' + magazine.identity + '-' + property.identity)
-                  : 0.0
+                    ? this.sliderValues.get(whatever.identity + '-' + magazine.identity + '-' + property.identity)
+                    : 0.0
                 ),
               })),
             })),
@@ -430,7 +394,7 @@ export default defineComponent({
       });
       img.src = url;
       await promise;
-      
+
       ctx = geograph.getContext('2d');
       ctx.drawImage(img, 0, 0, geograph.width, geograph.height);
     },
@@ -450,12 +414,9 @@ export default defineComponent({
     "a c"
   ;
   grid-template-columns:
-    30% 1fr
-  ;
+    30% 1fr;
   grid-template-rows:
-    1fr
-    1fr
-  ;
+    1fr 1fr;
   gap: 1rem;
 }
 
