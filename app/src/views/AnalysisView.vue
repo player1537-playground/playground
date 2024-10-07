@@ -1,8 +1,4 @@
 <template>
-  <v-container fluid>
-    <Header />
-
-    <v-main  class="fill-height">
       <v-row>
         <v-col>
           <nav>
@@ -51,16 +47,9 @@
           <dl id="procedures"></dl>
         </v-col>
       </v-row>
-    </v-main>
-
-    <Footer />
-  </v-container>
 </template>
 
 <script setup>
-import Header from '@/components/Header.vue';
-import Footer from '@/components/Footer.vue';
-
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import vegaEmbed from 'vega-embed';

@@ -1,18 +1,4 @@
 <template>
-  <v-container fluid fill-height>
-
-    <v-app-bar app color="primary">
-      <template v-slot:prepend>
-        <v-img
-          :src="logo_white"
-          class="header-logo mx-4"
-          height="32"
-          width="128"
-        ></v-img>
-      </template>
-    </v-app-bar>
-
-  <!-- <v-spacer></v-spacer> -->
    <div style="height: 3rem"></div>
 
   <div class="grid">
@@ -116,7 +102,6 @@
     <div class="c">
     </div>
   </div>
-</v-container>
 </template>
 
 <script>

@@ -1,7 +1,4 @@
 <template>
-  <Header />
-  <v-container fluid class="fill-height">
-    <v-main class="fill-height">
       <nav id="actions-toolbar">
         <v-btn @click="router.back()" color="primary" text>Back to Visits</v-btn>
 
@@ -61,17 +58,11 @@
           <div id="discharge-notes"></div>
         </v-col>
       </v-row>
-    </v-main>
-
-  </v-container>
-  <Footer />
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import Footer from '@/components/Footer.vue';
-import Header from '@/components/Header.vue';
 
 const loading = ref(true);
 const router = useRouter();
