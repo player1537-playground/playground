@@ -3,7 +3,7 @@
     <Header />
     <v-main>
       <v-container>
-    <RouterView />
+        <RouterView />
         <Footer />
       </v-container>
     </v-main>

@@ -1,5 +1,5 @@
 <template>
-      <PatientsList />
+  <PatientsList />
 </template>
 
 <script setup>
