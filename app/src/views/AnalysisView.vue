@@ -1,60 +1,101 @@
 <template>
-      <v-row>
-        <v-col>
-          <nav>
-            <v-btn to="/" color="primary" text>Back to Visits</v-btn>
-          </nav>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col>
-          <h2>Claim Summary</h2>
-          <!-- <textarea id="visit-summary" readonly></textarea> -->
-          <v-textarea v-model="dischargeSummary" readonly></v-textarea>
-        </v-col>
-      </v-row>
+  <v-row>
+    <v-col>
+      <nav>
+        <v-btn to="/" color="primary" text>Back to Visits</v-btn>
+      </nav>
+    </v-col>
+  </v-row>
+  <v-row>
+    <v-col>
+      <h2>Claim Summary</h2>
+      <v-textarea v-model="dischargeSummary" readonly></v-textarea>
+    </v-col>
+  </v-row>
 
+  <v-row>
+    <v-col cols="12" md="6" class="search-results">
       <v-row>
-        <v-col class="search-results">
+        <v-col>
           <h2>Similar Claims</h2>
-          <dl id="searchResults"></dl>
         </v-col>
+      </v-row>
+      <!-- <dl id="searchResults"></dl> -->
+      <v-row>
+        <v-col cols="12" v-if="!searchResultsCards.length">
+          <v-skeleton-loader type="card"></v-skeleton-loader>
+        </v-col>
+        <v-col v-for="card in searchResultsCards" :key="card.title" cols="12">
+          <v-card :color="card.rejected ? 'rgb(244, 165, 130)' : 'rgb(146, 197, 222)'">
+            <v-card-title>Admission {{ card.hadm_id }}</v-card-title>
+            <v-card-text>
+              <div>
+                <strong>Diagnostic Codes:</strong> <span v-html="card.dx"></span>
+              </div>
+              <div>
+                <strong>Procedure Codes:</strong> <span v-html="card.pd"></span>
+              </div>
+              <div v-if="!card.rejected">
+                <strong>Payment:</strong> {{ card.payment }}
+                <strong>Underpayment:</strong> {{ card.underpayment }}
+              </div>
+            </v-card-text>
+            <v-card-actions>
+              <v-btn :to="{ name: 'Patient', params: { id: card.hadm_id } }" text>View Claim</v-btn>
+              <v-spacer></v-spacer>
+              <v-btn icon="mdi-thumb-up" @click="upvote(card.hadm_id)" />
+              <v-btn icon="mdi-thumb-down" @click="downvote(card.hadm_id)" />
+            </v-card-actions>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-col>
 
+    <v-col cols="12" md="6">
+      <v-row>
         <v-col>
           <h2>Claim Denial Patterns</h2>
+        </v-col>
+      </v-row>
 
-          <v-row>
-            <v-col>
-              <v-select label="Diagnosis Code Specificity" v-model="N_DX" :items="[1, 2, 3]" @change="displayHeatmap" />
-            </v-col>
-            <v-col>
-              <v-select label="Procedure Code Specificity" v-model="N_PD" :items="[1, 2, 3]" @change="displayHeatmap" />
-            </v-col>
-          </v-row>
+      <v-row>
+        <v-col>
+          <v-select label="Diagnosis Code Specificity" v-model="N_DX" :items="[1, 2, 3]" @change="displayHeatmap" />
+        </v-col>
+        <v-col>
+          <v-select label="Procedure Code Specificity" v-model="N_PD" :items="[1, 2]" @change="displayHeatmap" />
+        </v-col>
+      </v-row>
 
+      <v-row style="overflow-x: scroll;">
+        <v-col>
           <div id="heatmapContainer"></div>
+          <v-skeleton-loader v-if="heatmapLoading" type="card"></v-skeleton-loader>
         </v-col>
       </v-row>
+    </v-col>
+  </v-row>
 
-      <v-row class="d-none">
-        <v-col>
-          <h2>Diagnoses</h2>
-          <dl id="diagnoses"></dl>
-        </v-col>
+  <v-row class="d-none">
+    <v-col>
+      <h2>Diagnoses</h2>
+      <dl id="diagnoses"></dl>
+    </v-col>
 
-        <v-col>
-          <h2>Procedures</h2>
-          <dl id="procedures"></dl>
-        </v-col>
-      </v-row>
+    <v-col>
+      <h2>Procedures</h2>
+      <dl id="procedures"></dl>
+    </v-col>
+  </v-row>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import vegaEmbed from 'vega-embed';
 
 const loading = ref(true);
+const heatmapLoading = ref(true);
 const route = useRoute();
 const hadm_id = ref(route.params.hadm_id);
 
@@ -63,11 +104,17 @@ const N_DX = ref(1);
 const N_PD = ref(1);
 let currentData = null;
 const dischargeSummary = ref('');
+const searchResultsCards = ref([]);
 
 const diagnosisDescriptions = {};
 const procedureDescriptions = {};
 
 main();
+
+watch([N_DX, N_PD], () => {
+  document.getElementById('heatmapContainer').innerHTML = '';
+  displayHeatmap(currentData.search.items || []);
+});
 
 /**
  * Fetch data from a URL. Cache the data in localStorage.
@@ -82,7 +129,7 @@ async function fetchData(resource, options = {}, cache = true) {
     return JSON.parse(localStorage.getItem(key));
   }
 
-  const response = await fetch(`${resource}`, options);
+  const response = await fetch(resource, options);
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
@@ -96,11 +143,10 @@ async function fetchData(resource, options = {}, cache = true) {
 
 async function fetchSearchData() {
   try {
-    const response = await fetchData(`https://purple.is.mediocreatbest.xyz/MIMIC-IV-Note/discharge/${hadm_id.value}/`);
+    const response = await fetchData(`https://purple.is.mediocreatbest.xyz/MIMIC-IV-Note/discharge/${hadm_id.value}/`, {}, false);
     dischargeSummary.value = response?.course || '';
   } catch (error) {
     console.error('Error fetching discharge summary:', error);
-    displayError('Error fetching discharge summary');
   }
 
   try {
@@ -113,7 +159,7 @@ async function fetchSearchData() {
         'Content-Type': 'application/json'
       },
       method: 'POST'
-    });
+    }, false);
 
     for (const item of response.search.items) {
       item.diagnosis = item.diagnosis.filter(dx => dx.dx10 !== 'NoDx');
@@ -123,66 +169,124 @@ async function fetchSearchData() {
     currentData = response;
   } catch (error) {
     console.error('Error fetching search results:', error);
-    displayError('Error fetching search results');
+  }
+}
+
+async function fetchDescription(code, type = 'dx') {
+  if (type === 'dx') {
+    if (diagnosisDescriptions[code]) {
+      return diagnosisDescriptions[code];
+    }
+    const response = await fetchData(`https://olive.is.mediocreatbest.xyz/08f178d8/ICD10CM/${code}`, {}, false);
+    diagnosisDescriptions[code] = response?.desc || '';
+    return diagnosisDescriptions[code];
+  } else {
+    if (procedureDescriptions[code]) {
+      return procedureDescriptions[code];
+    }
+    const response = await fetchData(`https://olive.is.mediocreatbest.xyz/08f178d8/ICD10PCS/${code}`, {}, false);
+    procedureDescriptions[code] = response?.desc || '';
+    return procedureDescriptions[code];
   }
 }
 
 async function fetchDescriptions(data) {
-  for (const item of data.items) {
-    // Code to pull Dx defintions, which I don't think will be required, but leaving here just in case.
+  const dxCodes = new Set();
+  const pdCodes = new Set();
 
+  for (const item of data.items) {
     for (const diagnosis of item.diagnosis) {
       if (diagnosis.dx10 === 'NoDx') {
         continue;
       }
       const diagnosisCode = diagnosis.dx10.length > N_DX.value ? diagnosis.dx10.slice(0, N_DX.value) : diagnosis.dx10;
-      if (!diagnosisDescriptions[diagnosisCode]) {
-        try {
-          const definition = await fetchData(`https://olive.is.mediocreatbest.xyz/08f178d8/ICD10CM/${diagnosisCode}`);
-          diagnosisDescriptions[diagnosisCode] = definition?.desc || '';
-        } catch (error) {
-          console.warn(`Error fetching diagnosis definition: ${diagnosisCode}`);
+      dxCodes.add(diagnosisCode);
+    }
 
-          diagnosisDescriptions[diagnosisCode] = '';
-        }
+    for (const procedure of item.procedure) {
+      if (procedure.pd10 === 'NoP') {
+        continue;
       }
+      const procedureCode = procedure.pd10.length > N_PD.value ? procedure.pd10.slice(0, N_PD.value) : procedure.pd10;
+      pdCodes.add(procedureCode);
     }
+  }
 
+  for (const diagnosisCode of dxCodes) {
+    if (!diagnosisDescriptions[diagnosisCode]) {
+      try {
+        await fetchDescription(diagnosisCode, 'dx');
+      } catch (error) {
+        console.warn(`Error fetching diagnosis definition: ${diagnosisCode}`);
 
-    // The endpoint providing the search results includes correct diagnosis descriptions.
-    //for (const diagnosis of item.diagnosis) {
-    //   if (diagnosis !== 'NoDx') {
-    //        diagnosisDescriptions[diagnosis.dx10] = diagnosis.desc;
-    //    }
-    // }
-
-    // NOTE The endpoint providing the search results includes incomplete procedure descriptions.
-    const pd10s = new Set();
-    for (const item of data.items) {
-      item.procedure.forEach(
-        procedure => {
-          if (procedure.pd10.startsWith('N')) return;
-          const pd10 = procedure.pd10.length > N_PD.value
-            ? procedure.pd10.slice(0, N_PD.value)
-            : procedure.pd10;
-          pd10s.add(pd10);
-        }
-      );
-    }
-
-    for (const procedureCode of pd10s) {
-      if (!procedureDescriptions[procedureCode] && procedureCode !== 'NoP') {
-        try {
-          const definition = await fetchData(`https://olive.is.mediocreatbest.xyz/08f178d8/ICD10PCS/${procedureCode}`);
-          procedureDescriptions[procedureCode] = definition?.desc || '';
-        } catch (error) {
-          console.error('Error fetching procedure definition:', error);
-        }
+        diagnosisDescriptions[diagnosisCode] = '';
       }
     }
   }
-  console.debug('Diagnosis Descriptions:', diagnosisDescriptions);
-  console.debug('Procedure Descriptions:', procedureDescriptions);
+
+  for (const procedureCode of pdCodes) {
+    if (!procedureDescriptions[procedureCode] && procedureCode !== 'NoP') {
+      try {
+        await fetchDescription(procedureCode, 'pd');
+      } catch (error) {
+        console.error('Error fetching procedure definition:', error);
+
+        procedureDescriptions[procedureCode] = '';
+      }
+    }
+  }
+
+  // for (const item of data.items) {
+  //   for (const diagnosis of item.diagnosis) {
+  //     if (diagnosis.dx10 === 'NoDx') {
+  //       continue;
+  //     }
+  //     const diagnosisCode = diagnosis.dx10.length > N_DX.value ? diagnosis.dx10.slice(0, N_DX.value) : diagnosis.dx10;
+  //     if (!diagnosisDescriptions[diagnosisCode]) {
+  //       try {
+  //         const definition = await fetchData(`https://olive.is.mediocreatbest.xyz/08f178d8/ICD10CM/${diagnosisCode}`, {}, false);
+  //         diagnosisDescriptions[diagnosisCode] = definition?.desc || '';
+  //       } catch (error) {
+  //         console.warn(`Error fetching diagnosis definition: ${diagnosisCode}`);
+
+  //         diagnosisDescriptions[diagnosisCode] = '';
+  //       }
+  //     }
+  //   }
+
+
+  //   // The endpoint providing the search results includes correct diagnosis descriptions.
+  //   //for (const diagnosis of item.diagnosis) {
+  //   //   if (diagnosis !== 'NoDx') {
+  //   //        diagnosisDescriptions[diagnosis.dx10] = diagnosis.desc;
+  //   //    }
+  //   // }
+
+  //   // NOTE The endpoint providing the search results includes incomplete procedure descriptions.
+  //   const pd10s = new Set();
+  //   for (const item of data.items) {
+  //     item.procedure.forEach(
+  //       procedure => {
+  //         if (procedure.pd10.startsWith('N')) return;
+  //         const pd10 = procedure.pd10.length > N_PD.value
+  //           ? procedure.pd10.slice(0, N_PD.value)
+  //           : procedure.pd10;
+  //         pd10s.add(pd10);
+  //       }
+  //     );
+  //   }
+
+  //   for (const procedureCode of pd10s) {
+  //     if (!procedureDescriptions[procedureCode] && procedureCode !== 'NoP') {
+  //       try {
+  //         const definition = await fetchData(`https://olive.is.mediocreatbest.xyz/08f178d8/ICD10PCS/${procedureCode}`, {}, false);
+  //         procedureDescriptions[procedureCode] = definition?.desc || '';
+  //       } catch (error) {
+  //         console.error('Error fetching procedure definition:', error);
+  //       }
+  //     }
+  //   }
+  // }
 }
 
 /**
@@ -198,12 +302,28 @@ async function fetchScore(dxCodes, pdCodes, what = 'Positive-Negative') {
         dx: dxCodes.filter(dx => dx !== 'NoDx'),
         pd: pdCodes.filter(pd => pd !== 'NoP')
       })
-    });
+    }, false);
   } catch (error) {
     console.error('Error fetching score:', error);
-    //displayError('Error fetching score');
     return 0;
   }
+}
+
+async function fetchUnderpayment(dxCodes, pdCodes) {
+  if (pdCodes.length === 0) {
+    throw new Error('No procedure codes provided.');
+  }
+
+  return await fetchData('https://purple.is.mediocreatbest.xyz/underpayment/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      dxs: dxCodes.filter(dx => dx !== 'NoDx'),
+      pds: pdCodes.filter(pd => pd !== 'NoP'),
+      ndx: 2,
+      npd: 2
+    })
+  }, false);
 }
 
 async function fetchHeatmapData() {
@@ -220,10 +340,9 @@ async function fetchHeatmapData() {
         pred: `DX${N_DX.value}`,
         prod: `PD${N_PD.value}`
       })
-    });
+    }, false);
   } catch (error) {
     console.error('Error fetching heatmap data:', error);
-    //displayError('Error fetching heatmap data');
   }
 
   try {
@@ -235,24 +354,19 @@ async function fetchHeatmapData() {
         pred: `DX${N_DX.value}`,
         prod: `PD${N_PD.value}`
       })
-    });
-
-    console.debug(rejections);
+    }, false);
   } catch (error) {
     console.error('Error fetching heatmap data:', error);
-    //displayError('Error fetching heatmap data');
   }
-
-  console.debug(rejections)
 
   // Let's convert the data to a format that Vega-Lite can understand.
   for (let dxId = 0; dxId < rejections.data.length; dxId++) {
     for (let pdId = 0; pdId < rejections.data[dxId].length; pdId++) {
       const diagnosis = rejections.index[dxId];
-      const diagnosisDesc = await fetchData(`https://olive.is.mediocreatbest.xyz/08f178d8/ICD10CM/${diagnosis}`);
+      //const diagnosisDesc = await fetchData(`https://olive.is.mediocreatbest.xyz/08f178d8/ICD10CM/${diagnosis}`, {}, false);
 
       const procedure = rejections.columns[pdId];
-      const procedureDesc = await fetchData(`https://olive.is.mediocreatbest.xyz/08f178d8/ICD10PCS/${procedure}`);
+      //const procedureDesc = await fetchData(`https://olive.is.mediocreatbest.xyz/08f178d8/ICD10PCS/${procedure}`, {}, false);
 
       // Percent rejected truncated to 4 decimal places.
       const acceptanceDxId = acceptance.index.findIndex(dx => dx === diagnosis);
@@ -264,9 +378,9 @@ async function fetchHeatmapData() {
 
       data.push({
         diagnosis: rejections.index[dxId],
-        diagnosisDesc: diagnosisDesc.desc,
+        //diagnosisDesc: diagnosisDesc.desc,
         procedure: rejections.columns[pdId],
-        procedureDesc: procedureDesc.desc,
+        //procedureDesc: procedureDesc.desc,
         count: rejectionsCount + acceptanceCount,
         percentAccepted: percentAccepted,
         percentRejected: percentRejected
@@ -284,111 +398,79 @@ async function main() {
   if (!currentData) return;
 
   await fetchDescriptions(currentData.search);
-  displayData(currentData);
+  displaySearchResults(currentData.search.items || []);
+  displayHeatmap(currentData.search.items || []);
 }
 
-function displayData(data) {
-  displaySearchResults(data.search.items || []);
-  displayHeatmap(data.search.items || []);
-}
-
-/**
-  * @todo Add mouseover/tap tooltips on badges.
-  */
 async function displaySearchResults(items) {
-  const container = document.getElementById('searchResults');
-  container.innerHTML = ''; // Clear previous content
-
   for (const item of items) {
     const dxCodes = item.diagnosis.map(dx => dx.dx10);
     const pdCodes = item.procedure.map(pd => pd.pd10);
     const { score, dxs, pds } = await fetchScore(dxCodes, pdCodes);
+    let payment, underpayment;
+    try {
+      const underpaymentData = await fetchUnderpayment(dxCodes, pdCodes);
+      payment = !underpaymentData ? 0 : underpaymentData.cost.lo.tight.avg * underpaymentData.mult.lo.tight.avg;
+      const maxPayment = !underpaymentData ? 0 : underpaymentData.cost.hi.tight.avg * underpaymentData.mult.hi.tight.avg;
+      underpayment = (maxPayment - payment) / maxPayment * 100;
 
-    const div = document.createElement('div');
-    div.className = 'item';
-    div.style.backgroundColor = score > 0 ? '#92c5de' : '#f4a582';
-    div.style.borderRadius = '5px';
-    let divInnerHTML = `
-                    <dt><a target="_blank" title="Score: ${score}" href="/index.html?hadm_id=${item.hadm_id}">HADM ${item.hadm_id}</a></dt>
-                    <dd><br />
-                        <span style="font-size: 0.8em; margin-bottom: 0.5em; line-height: calc(var(--golden-ratio) * 0.8);"><strong>Diagnostic Codes:</strong>`
+      payment = `$${payment.toFixed(2)}`;
+      underpayment = `${underpayment.toFixed(1)}%`;
+    } catch (error) {
+      payment = 'N/A';
+      underpayment = 'N/A';
+    }
+
+    const card = {
+      hadm_id: item.hadm_id,
+      dx: '',
+      pd: '',
+      rejected: score < 0,
+      payment: payment,
+      underpayment: underpayment
+    };
 
     for (const dxCode of dxCodes) {
       if (dxCode === 'NoDx') continue;
 
       if (dxs.includes(dxCode)) {
-        divInnerHTML += ` <strong style="text-decoration: underline;">${dxCode}*</strong>`;
+        card.dx += ` <strong style="text-decoration: underline;">${dxCode}*</strong>`;
       } else {
-        divInnerHTML += ` ${dxCode}`;
+        card.dx += ` ${dxCode}`;
       }
     }
 
-    divInnerHTML += `
-                        </span><br />
-                        <span style="font-size: 0.8em; line-height: calc(var(--golden-ratio) * 0.8);"><strong>Procedure Codes:</strong>`
     for (const pdCode of pdCodes) {
       if (pdCode === 'NoP') continue;
 
       if (pds.includes(pdCode)) {
-        divInnerHTML += ` <strong style="text-decoration: underline;">${pdCode}*</strong>`;
+        card.pd += ` <strong style="text-decoration: underline;">${pdCode}*</strong>`;
       } else {
-        divInnerHTML += ` ${pdCode}`;
+        card.pd += ` ${pdCode}`;
       }
     }
 
-    divInnerHTML += `
-                        </span>
-                    </dd>
-                `;
-    //console.log(divInnerHTML)
-    div.innerHTML = divInnerHTML;
-    container.appendChild(div);
+    searchResultsCards.value.push(card);
   }
 }
 
-function displayError(message) {
-  const containers = ['searchResults', 'diagnoses', 'procedures'];
-  containers.forEach(containerId => {
-    const container = document.getElementById(containerId);
-    container.innerHTML = `<p class="error">${message}</p>`;
+function injectDescription(code, type = 'dx') {
+  const elements = document.getElementsByClassName(`${type}-desc`);
+  for (const element of elements) {
+    element.innerHTML = 'Loading...';
+  }
+
+  fetchDescription(code, type).then(description => {
+    const elements = document.getElementsByClassName(`${type}-desc`);
+    for (const element of elements) {
+      element.innerHTML = description;
+    }
   });
 }
 
 async function displayHeatmap(items) {
-  //const heatmapData = new Map();
+  heatmapLoading.value = true;
   const heatmapData = await fetchHeatmapData();
-
-  //await fetchDescriptions(currentData.search);
-
-  /*
-  items.forEach(item => {
-      item.diagnosis.forEach(diagnosis => {
-          const diagnosisCode = diagnosis.dx10.length > N_DX.value ? diagnosis.dx10.slice(0, N_DX.value) : diagnosis.dx10;
-          const diagnosisDesc = diagnosisDescriptions[diagnosisCode] || '';
-
-          item.procedure.forEach(procedure => {
-              const procedureCode = procedure.pd10.length > N_PD.value ? procedure.pd10.slice(0, N_PD.value) : procedure.pd10;
-              const procedureDesc = procedureDescriptions[procedureCode] || '';
-              const key = `${diagnosisCode}-${procedureCode}`;
-
-              if (heatmapData.has(key)) {
-                  heatmapData.get(key).count++;
-              } else {
-                  heatmapData.set(key, {
-                      diagnosis: diagnosisCode,
-                      diagnosisDesc: diagnosisDesc,
-                      procedure: procedureCode,
-                      procedureDesc: procedureDesc,
-                      count: 1,
-                  });
-              }
-          });
-      });
-  });
-
-  const diagnoses = [...new Set(Array.from(heatmapData.values()).map(item => item.diagnosis))];
-  const procedures = [...new Set(Array.from(heatmapData.values()).map(item => item.procedure))];
-  */
 
   const diagnoses = [...new Set(heatmapData.map(item => item.diagnosis))];
   const procedures = [...new Set(heatmapData.map(item => item.procedure))];
@@ -412,9 +494,7 @@ async function displayHeatmap(items) {
       "y": { "field": "diagnosis", "type": "ordinal", "zero": false },
       "tooltip": [
         { "field": "diagnosis", "type": "ordinal", "title": "Diagnosis" },
-        { "field": "diagnosisDesc", "type": "ordinal", "title": "Diagnosis Description" },
         { "field": "procedure", "type": "ordinal", "title": "Procedure" },
-        { "field": "procedureDesc", "type": "ordinal", "title": "Procedure Description" },
         { "field": "count", "type": "quantitative", "title": "Count" },
         { "field": "percentRejected", "type": "quantitative", "title": "Percent Rejected" }
       ]
@@ -434,19 +514,7 @@ async function displayHeatmap(items) {
             }
           }
         }
-      },
-      /*
-      {
-          "mark": "text",
-          "encoding": {
-              "text": { "field": "count", "type": "quantitative" },
-              "color": {
-                  "condition": { "test": `datum['count'] < ${max * .9}`, "value": "black" },
-                  "value": "white"
-              }
-          }
       }
-      */
     ],
     "config": {
       "axis": { "grid": true, "tickBand": "extent" }
@@ -457,11 +525,11 @@ async function displayHeatmap(items) {
     "tooltip": {
       "theme": "heatmap",
       "formatTooltip": (value, sanitize) => `
-                        <div class="diagnosis-code">Diagnosis: ${sanitize(value.Diagnosis)}</div>
-                        <div class="diagnosis-description">${sanitize(value["Diagnosis Description"])}</div>
+                        <div class="dx-code">Diagnosis: ${sanitize(value.Diagnosis)}</div>
+                        <div class="dx-desc">${injectDescription(value.Diagnosis, 'dx')}</div>
                         <hr />
-                        <div class="procedure-code">Procedure: ${sanitize(value.Procedure)}</div>
-                        <div class="procedure-description">${sanitize(value["Procedure Description"])}</div>
+                        <div class="pd-code">Procedure: ${sanitize(value.Procedure)}</div>
+                        <div class="pd-desc">${injectDescription(value.Procedure, 'pd')}</div>
                         <hr />
                         <div class="count">Occurences: ${sanitize(value.Count)}</div>
                         <hr />
@@ -482,7 +550,15 @@ async function displayHeatmap(items) {
 
   await vegaEmbed('#heatmapContainer', vegaSpec, tooltipOptions);
 
-  document.getElementById('heatmapOptions').hidden = false;
+  heatmapLoading.value = false;
+}
+
+function upvote(hadm_id) {
+  console.log('Upvoting:', hadm_id);
+}
+
+function downvote(hadm_id) {
+  console.log('Downvoting:', hadm_id);
 }
 </script>
 
@@ -493,22 +569,6 @@ async function displayHeatmap(items) {
   border-radius: 5px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   max-height: 150vh;
-}
-
-.search-results a,
-.search-results a:visited {
-  color: #333;
-  text-decoration: none;
-}
-
-h2 {
-  margin-top: 0;
-  color: #333;
-}
-
-textarea {
-  width: 100%;
-  height: 100px;
 }
 
 #heatmapContainer {
