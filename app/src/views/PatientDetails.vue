@@ -1,359 +1,294 @@
 <template>
-      <nav id="actions-toolbar">
-        <v-btn @click="router.back()" color="primary" text>Back to Visits</v-btn>
+  <v-navigation-drawer class="pl-4 pt-4" permanent persistent>
+    <v-list-subheader>Navigation</v-list-subheader>
+    <v-list-item title="Back to Admissions" :to="{ name: 'Patients' }"></v-list-item>
+    <v-divider v-if="!loading"></v-divider>
+    <v-list-subheader v-if="!loading">Actions</v-list-subheader>
+    <v-list-item title="Analyze" :to="analyzeBtnUrl" v-if="!loading"></v-list-item>
+    <v-list-item title="Recommend Diagnosis Codes" :to="fooBtnUrl" v-if="!loading"></v-list-item>
+    <v-list-item title="Recommend Billing Codes" :to="bazBtnUrl" v-if="!loading"></v-list-item>
+    <v-list-item title="Recommend SDOH Codes" :to="barBtnUrl" v-if="!loading"></v-list-item>
+  </v-navigation-drawer>
 
-        <div class="button-group end">
-          <v-btn color="primary" :to="analyzeBtnUrl">Analyze</v-btn>
-          <v-btn color="primary" to="/foo/">Recommend Diagnosis Codes</v-btn>
-          <v-btn color="primary" to="/baz/">Recommend Billing Codes</v-btn>
-          <v-btn color="primary" to="/bar/">Recommend SDOH Codes</v-btn>
-        </div>
-      </nav>
+  <v-row v-if="!loading">
+    <v-col cols="12" md="4">
+      <v-card class="fill-height">
+        <v-card-item>
+          <v-card-title>Patient Information</v-card-title>
+        </v-card-item>
 
+        <v-card-text>
+          <div id="patient-info"></div>
+          <v-table density="compact">
+            <tbody>
+              <tr>
+                <td>Patient ID</td>
+                <td>{{ patientInfo.subject_id }}</td>
+              </tr>
+              <tr>
+                <td>Gender</td>
+                <td>{{ patientInfo.gender }}</td>
+              </tr>
+              <tr>
+                <td>Age</td>
+                <td>{{ patientInfo.anchor_age }}</td>
+              </tr>
+              <tr>
+                <td>Date of Visit</td>
+                <td>{{ patientInfo.anchor_year_group }}</td>
+              </tr>
+              <tr hidden>
+                <td>Date of Visit</td>
+                <td>{{ patientInfo.anchor_year }}</td>
+              </tr>
+              <tr hidden>
+                <td>Date of Death</td>
+                <td>{{ patientInfo.dod || 'N/A' }}</td>
+              </tr>
+              <tr>
+                <td>Visit ID</td>
+                <td>{{ hadm_id }}</td>
+              </tr>
+            </tbody>
+          </v-table>
+        </v-card-text>
+      </v-card>
+    </v-col>
+
+    <v-col cols="12" md="4">
+      <v-card class="fill-height">
+        <v-card-item>
+          <v-card-title>Diagnoses</v-card-title>
+        </v-card-item>
+
+        <v-card-text>
+          <v-list>
+            <v-list-item v-for="diagnosis in diagnosesList" :key="diagnosis.value">
+              <v-list-item-title>{{ diagnosis.title }}</v-list-item-title>
+              <v-list-item-subtitle>{{ diagnosis.desc }}</v-list-item-subtitle>
+            </v-list-item>
+          </v-list>
+        </v-card-text>
+      </v-card>
+    </v-col>
+
+    <v-col cols="12" md="4">
+      <v-card class="fill-height">
+        <v-card-item>
+          <v-card-title>Procedures</v-card-title>
+        </v-card-item>
+
+        <v-card-text>
+          <v-list lines="three">
+            <v-list-item v-for="procedure in proceduresList" :key="procedure.value">
+              <v-list-item-title>{{ procedure.title }}</v-list-item-title>
+              <v-list-item-subtitle>{{ procedure.desc }}</v-list-item-subtitle>
+            </v-list-item>
+          </v-list>
+        </v-card-text>
+      </v-card>
+    </v-col>
+  </v-row>
+
+  <v-row v-if="!loading">
+    <v-col>
+      <h3>Discharge Notes</h3>
+      <details hidden>
+        <summary>Full Record</summary>
+        <v-textarea v-model="dischargeNotesTextAreaRef" readonly></v-textarea>
+      </details>
       <v-row>
-        <v-col cols="12" md="4">
+        <v-col cols="12" md="4" v-for="card in dischargeNotesCards" :key="card.title">
           <v-card class="fill-height">
-            <v-card-item>
-              <v-card-title>Patient Information</v-card-title>
-            </v-card-item>
-
+            <v-card-title>{{ card.title }}</v-card-title>
             <v-card-text>
-              <div id="patient-info"></div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-
-        <v-col cols="12" md="4">
-          <v-card class="fill-height">
-            <v-card-item>
-              <v-card-title>Diagnoses</v-card-title>
-            </v-card-item>
-
-            <v-card-text>
-              <ul id="diagnoses-list"></ul>
-            </v-card-text>
-          </v-card>
-        </v-col>
-
-        <v-col cols="12" md="4">
-          <v-card class="fill-height">
-            <v-card-item>
-              <v-card-title>Procedures</v-card-title>
-            </v-card-item>
-
-            <v-card-text>
-              <ul id="procedures-list"></ul>
+              <div v-for="line in card.lines" :key="line">{{ line }}</div>
             </v-card-text>
           </v-card>
         </v-col>
       </v-row>
-
-      <v-row>
-        <v-col>
-          <h3>Discharge Notes</h3>
-          <details>
-            <summary>Full Record</summary>
-            <textarea readonly></textarea>
-          </details>
-          <div id="discharge-notes"></div>
-        </v-col>
-      </v-row>
+    </v-col>
+  </v-row>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+
+const THE_GOOD_ONE = `Brief Hospital Course:
+The patient presented for a follow-up visit after being diagnosed with rheumatoid arthritis and arthropathic psoriasis. They also have a history of malignant neoplasms, including a left kidney tumor and a left ureter tumor, as well as chronic kidney disease stage 3. The patient is currently being treated for a bacterial infection and has a MRSA infection. Additionally, they have an infection and inflammatory reaction due to a cardiac device, which is being monitored. The patient's overall health is compromised due to their complex medical conditions, and they require ongoing management and treatment to prevent complications.
+null:`;
 
 const loading = ref(true);
 const router = useRouter();
 const route = useRoute();
-const hadm_id = route.params.id;
+const hadm_id = ref(route.params.id);
+console.debug(hadm_id.value);
 
-const analyzeBtnUrl = ref(`/analyze/${hadm_id}`);
+watch(hadm_id, () => {
+  console.debug('hadm_id', hadm_id.value);
+});
 
-console.debug('BEGIN showVisitDetails', hadm_id);
+const analyzeBtnUrl = ref({ name: 'Analyze', params: { hadm_id: hadm_id.value } });
+const fooBtnUrl = ref({ name: 'foo' });
+const bazBtnUrl = ref({ name: 'baz', query: {} });
+const barBtnUrl = ref({ name: 'bar' });
+
+const patientInfo = ref();
+const diagnosesList = ref([]);
+const proceduresList = ref([]);
+const dischargeNotesTextAreaRef = ref([]);
+const dischargeNotesCards = ref([{ title: '', lines: [''] }]);
 
 loadData();
 
-async function fetchData(url) {
-  const response = await fetch(`https://olive.is.mediocreatbest.xyz/937506e2${url}`);
+async function fetchData(resource, options = {}) {
+  if (!resource.startsWith('http')) {
+    resource = `https://olive.is.mediocreatbest.xyz/937506e2${resource}`;
+  }
+  console.debug(resource);
+  const response = await fetch(resource);
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
   return await response.json();
 }
 
+async function fetchDescription(code, kind) {
+  let response;
+  switch (kind) {
+    case 'dx':
+      response = await fetchData(`https://olive.is.mediocreatbest.xyz/08f178d8/ICD10CM/${code}`); break;
+    case 'pd':
+      response = await fetchData(`https://olive.is.mediocreatbest.xyz/08f178d8/ICD10PCS/${code}`); break;
+  }
+  return response.desc.split('>').pop().trim();
+}
+
 async function loadData() {
   try {
-    const [admission] = await fetchData(`/admissions?hadm_id=${hadm_id}`);
-    console.debug('admission', admission);
+    const [admission] = await fetchData(`/admissions?hadm_id=${hadm_id.value}`);
     const [patient] = await fetchData(`/patients?subject_id=${admission.subject_id}`);
-    console.debug('patient', patient);
-
-    document.getElementById('patient-info').innerHTML = `
-      <dl>
-          <dt>Patient ID</dt><dd>${patient.subject_id}</dd>
-          <dt>Gender</dt><dd>${patient.gender}</dd>
-          <dt>Age Group</dt><dd>${patient.anchor_age}</dd>
-          <dt>Anchor Year</dt><dd>${patient.anchor_year}</dd>
-          <dt>Date of Death</dt><dd>${patient.dod || 'N/A'}</dd>
-          <dt>Visit ID</dt><dd>${hadm_id}</dd>
-      </dl>
-    `;
-  } catch (error) { }
+    patientInfo.value = patient;
+  } catch (error) { console.error(error); }
 
   try {
-    const diagnoses = await fetchData(`/diagnoses?hadm_id=${hadm_id}`);
-    console.debug('diagnoses', diagnoses);
-    const diagnosesList = document.getElementById('diagnoses-list');
-    diagnosesList.innerHTML = '';
-    diagnoses.forEach(diagnosis => {
-      const li = document.createElement('li');
-      li.textContent = `${diagnosis.dx10}`;
-      diagnosesList.appendChild(li);
-    });
-  } catch (error) { }
+    let diagnoses = await fetchData(`/diagnoses?hadm_id=${hadm_id.value}`);
+    diagnoses = diagnoses.filter(d => d.dx10 !== 'NoDx');
 
-  try {
-    const procedures = await fetchData(`/procedures?hadm_id=${hadm_id}`);
-    console.debug('procedures', procedures);
-    const proceduresList = document.getElementById('procedures-list');
-    proceduresList.innerHTML = '';
-    procedures.forEach(procedure => {
-      const li = document.createElement('li');
-      li.textContent = `${procedure.pd10}`;
-      proceduresList.appendChild(li);
-    });
-    if (procedures.length === 0) {
-      const li = document.createElement('li');
-      li.textContent = 'No procedures recorded';
-      proceduresList.appendChild(li);
+    bazBtnUrl.value.query.dx = diagnoses.map(d => d.dx10).join(',');
+
+    for (const diagnosis of diagnoses) {
+      diagnosesList.value.push({
+        title: diagnosis.dx10,
+        desc: await fetchDescription(diagnosis.dx10, 'dx'),
+        value: parseInt(diagnosis.seq_num, 10)
+      });
     }
-  } catch (error) { }
+
+    diagnosesList.value = diagnosesList.value.sort((a, b) => a.value - b.value);
+  } catch (error) { console.error(error); }
 
   try {
-    let discharges = await fetchData(`/discharges?hadm_id=${hadm_id}`);
-    console.debug('discharges', discharges);
-    if (hadm_id == '27269506') {
+    let procedures = await fetchData(`/procedures?hadm_id=${hadm_id.value}`);
+    procedures = procedures.filter(p => p.pd10 !== 'NoPcs');
+
+    bazBtnUrl.value.query.pd = procedures.map(p => p.pd10).join(',');
+
+    for (const procedure of procedures) {
+      proceduresList.value.push({
+        title: procedure.pd10,
+        desc: await fetchDescription(procedure.pd10, 'pd'),
+        value: parseInt(procedure.seq_num, 10)
+      });
+    }
+
+    proceduresList.value = proceduresList.value.sort((a, b) => a.value - b.value);
+
+    if (proceduresList.value.length === 0) {
+      proceduresList.value.push({ title: 'No procedures recorded' });
+    }
+  } catch (error) { console.error(error); }
+
+  try {
+    let discharges;
+    if (hadm_id.value === '27269506') {
       discharges = [{ text: THE_GOOD_ONE }];
+    } else {
+      discharges = await fetchData(`/discharges?hadm_id=${hadm_id.value}`);
     }
-    const dischargeNotes = document.getElementById('discharge-notes');
-    dischargeNotes.innerHTML = '';
+
+    dischargeNotesTextAreaRef.value = discharges.map(d => d.text).join('\n');
+
     discharges.forEach(note => {
-      const formattedText = formatDischargeNotes(note.text);
-      dischargeNotes.innerHTML += formattedText;
+      formatDischargeNotes(note.text);
     });
-  } catch (error) { }
+  } catch (error) { console.error(error); }
 
-  // Setup Analyze button
-  // let analyzeBtnUrl = new URL('/analyze.html', window.location.href);
-  // analyzeBtnUrl.searchParams.set('hadm_id', hadm_id);
-  // analyzeBtn.href = analyzeBtnUrl.href;
-
-  // Setup Recommend Billing Codes button
-  //   let bazBtn = document.getElementById('bazBtn');
-  //   let bazBtnUrl = new URL('https://red.is.mediocreatbest.xyz/baz/');
-  //   bazBtnUrl.searchParams.set('dx', diagnoses.map(d => d.dx10).join(','));
-  //   bazBtnUrl.searchParams.set('pd', procedures.map(p => p.pd10).join(','));
-  //   bazBtn.href = bazBtnUrl.href;
+  loading.value = false;
 }
 
 function formatDischargeNotes(text) {
-  document.querySelector('#discharge-content details textarea').value = text;
-
   const lines = text.split('\n');
-  let formattedHtml = '';
   let currentSection = '';
   let currentText = '';
 
-  lines.forEach(line => {
+  const headers = [
+    'Past Medical History',
+    'Discharge Condition',
+    'Major Surgical or Invasive Procedure',
+    'Discharge Instructions',
+    'History of Present Illness',
+    'Discharge Disposition',
+    'Followup Instructions',
+    'Physical Exam',
+    'Discharge Medications',
+    'Chief Complaint',
+    'Social History',
+    'Family History',
+    'Discharge Diagnosis',
+    'Pertinent Results',
+    'Medications on Admission',
+    'Brief Hospital Course',
+  ]
+
+  for (let line of lines) {
     if (line.trim().endsWith(':')) {
+      line = line.replace(':', '');
+
+      // If the previous section was Brief Hospital Course,
+      // add the text to the foo button's querystring
       if (currentSection) {
-        if (currentSection === 'Brief Hospital Course:') {
-          const fooBtn = document.getElementById('fooBtn');
-          const fooBtnUrl = new URL('https://red.is.mediocreatbest.xyz/foo/');
-          fooBtnUrl.searchParams.set('text', currentText);
-          fooBtn.href = fooBtnUrl.href;
+        if (currentSection === 'Brief Hospital Course') {
+          fooBtnUrl.value.query = {
+            text: currentText
+          };
+
+          // Remove first card if it's empty at this point.
+          const firstCard = dischargeNotesCards.value[0];
+          if (firstCard.lines.length === 1 && firstCard.lines[0] === '') {
+            dischargeNotesCards.value.shift();
+          }
         }
-
-        formattedHtml += `</div>`;
       }
 
-      if (line === 'null:') {
-        return;
+      if (line === 'null') {
+        continue;
       }
 
-      formattedHtml += `<div class="note-section"><h4 class="summary-heading">${line}</h4>`;
+      if (!headers.includes(line)) {
+        currentText += line + '\n';
+        dischargeNotesCards.value[dischargeNotesCards.value.length - 1].lines.push(line);
+        continue;
+      }
+
+      dischargeNotesCards.value.push({ title: line, lines: [''] });
       currentSection = line;
       currentText = '';
     } else {
-      formattedHtml += `<p>${line}</p>`;
       currentText += line + ' ';
+      dischargeNotesCards.value[dischargeNotesCards.value.length - 1].lines.push(line);
     }
-  });
-
-  if (currentSection) {
-    formattedHtml += `</div>`;
   }
-
-  return formattedHtml;
 }
-
-console.debug('END showVisitDetails', hadm_id);
 </script>
-
-<style scoped>
-h3.summary-heading {
-  margin-bottom: 5px;
-  color: #2c3e50;
-  font-size: 1.1em;
-}
-
-/*
-#visit-details {
-  margin: 20px;
-}
-*/
-
-.loader {
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid #3498db;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  animation: spin 1s linear infinite;
-  margin: 20px auto;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-section {
-  background-color: var(--section-bg-color);
-  padding: 20px;
-  margin: 20px;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-section :first-child {
-  margin-top: 0;
-}
-
-#visit-details {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-}
-
-#actions-toolbar {
-  grid-column: 1 / 4;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-#patient-content {
-  grid-column: 1 / 2;
-}
-
-#patient-content dl {
-  display: grid;
-  grid-template-columns: max-content auto;
-  gap: 10px;
-
-}
-
-#patient-content dt {
-  grid-column-start: 1;
-  font-weight: bold;
-  text-align: end;
-}
-
-#patient-content dt::after {
-  content: ':';
-}
-
-#patient-content dd {
-  grid-column-start: 2;
-  margin: 0;
-}
-
-#diagnoses-content {
-  grid-column: 2 / 3;
-}
-
-#procedures-content {
-  grid-column: 3 / 4;
-}
-
-#discharge-content {
-  grid-column: 1 / 4;
-}
-
-#discharge-content details {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  margin: 20px 0;
-}
-
-#discharge-content summary {
-  margin-bottom: 10px;
-  user-select: none;
-}
-
-#discharge-content textarea {
-  display: block;
-  resize: none;
-  width: 100%;
-  height: 80vh;
-}
-
-#discharge-notes {
-  column-count: 3;
-  column-gap: 20px;
-}
-
-.note-section {
-  break-inside: avoid-column;
-  margin-bottom: 20px;
-  border: 1px solid #ddd;
-  padding: 10px;
-  border-radius: 5px;
-  background-color: #eee;
-}
-
-.note-section :first-child {
-  margin-top: 0;
-}
-
-.note-section h4 {
-  color: var(--frame-bg-color);
-}
-
-.note-section p {
-  margin: 0;
-}
-
-nav#actions-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 0 20px 20px;
-}
-
-nav#actions-toolbar button {
-  display: flex;
-}
-
-.button-group.end {
-  justify-self: end;
-}
-</style>
