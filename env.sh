@@ -12,5 +12,6 @@ esac
 
 scribe_root_dir=${root:?}
 vainl_api_url=https://sdoh.with.vainl.in.production.is.mediocreatbest.xyz/vainl/
+scribe_api_url=https://purple.is.mediocreatbest.xyz/
 
 . "${root:?}/.env"

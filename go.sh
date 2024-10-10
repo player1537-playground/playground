@@ -103,7 +103,7 @@ go-Invoke-Container() {
     ##
 }
 
---scribe-vars() {
+--scribe-web-vars() {
     SCRIBE_ROOT_DIR=${scribe_root_dir:?}
     export SCRIBE_ROOT_DIR
 
@@ -118,6 +118,11 @@ go-Invoke-Container() {
 
     VAINL_API_KEY=${vainl_api_key:?}
     export VAINL_API_KEY
+}
+
+--scribe-app-vars() {
+    VITE_SCRIBE_API_URL=${scribe_api_url:?}
+    export VITE_SCRIBE_API_URL
 }
 
 declare -A server_host
@@ -142,6 +147,8 @@ app_server_bind=${server_bind["red"]:?}
 app_server_port=${server_port["red"]:?}
 
 go-Initialize-AppEnvironment() {
+    --scribe-app-vars
+
     cd "${app:?}" \
     && \
     pexec npm install \
@@ -149,6 +156,8 @@ go-Initialize-AppEnvironment() {
 }
 
 go-Invoke-AppServer() {
+    --scribe-app-vars
+
     cd "${app:?}" \
     && \
     pexec node_modules/.bin/vite \
@@ -159,6 +168,8 @@ go-Invoke-AppServer() {
 }
 
 go-Start-AppServer() {
+    --scribe-app-vars
+
     pexec tmux new-session \
         -A \
         -s "${app_session_name:?}" \
@@ -167,11 +178,8 @@ go-Start-AppServer() {
 }
 
 go-Build-AppDist() {
-    # pexec "${self:?}" Invoke-Container "${self:?}" --Build-AppDist "$@"
-    go---Build-AppDist "$@"
-}
+    --scribe-app-vars
 
-go---Build-AppDist() {
     cd "${app:?}" \
     && \
     pexec npm run build \
@@ -179,6 +187,8 @@ go---Build-AppDist() {
 }
 
 go-Package-AppDist() {
+    --scribe-app-vars
+
     cd "${app:?}" \
     && \
     rm -f dist.zip \
@@ -225,7 +235,7 @@ go-Invoke-WebServer() {
 }
 
 go---Invoke-WebServer() {
-    --scribe-vars
+    --scribe-web-vars
 
     pexec "${web_virtualenv_path:?}/bin/uvicorn" \
         --host "${web_server_bind:?}" \
@@ -244,4 +254,6 @@ go-Start-WebServer() {
 
 #---
 test -f "${root:?}/env.sh" && source "${_:?}"
-go "$@"
+if ! (return 0 2>/dev/null); then
+    go "$@"
+fi
