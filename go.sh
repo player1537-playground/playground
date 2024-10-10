@@ -142,10 +142,6 @@ app_server_bind=${server_bind["red"]:?}
 app_server_port=${server_port["red"]:?}
 
 go-Initialize-AppEnvironment() {
-    pexec "${self:?}" Invoke-Container "${self:?}" --Initialize-AppEnvironment "$@"
-}
-
-go---Initialize-AppEnvironment() {
     cd "${app:?}" \
     && \
     pexec npm install \
@@ -153,10 +149,6 @@ go---Initialize-AppEnvironment() {
 }
 
 go-Invoke-AppServer() {
-    pexec "${self:?}" Invoke-Container "${self:?}" --Invoke-AppServer "$@"
-}
-
-go---Invoke-AppServer() {
     cd "${app:?}" \
     && \
     pexec node_modules/.bin/vite \
@@ -174,6 +166,29 @@ go-Start-AppServer() {
     ##
 }
 
+go-Build-AppDist() {
+    # pexec "${self:?}" Invoke-Container "${self:?}" --Build-AppDist "$@"
+    go---Build-AppDist "$@"
+}
+
+go---Build-AppDist() {
+    cd "${app:?}" \
+    && \
+    pexec npm run build \
+    ##
+}
+
+go-Package-AppDist() {
+    cd "${app:?}" \
+    && \
+    rm -f dist.zip \
+    && \
+    pexec zip \
+        -r \
+        dist.zip \
+        dist \
+    ##
+}
 
 #---
 

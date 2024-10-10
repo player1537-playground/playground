@@ -69,6 +69,7 @@
 </template>
 
 <script>
+import config from '@/config';
 import { defineComponent, readonly, markRaw } from 'vue';
 import logo_white from '@/assets/logo_white.svg';
 import YAML from 'yaml';
@@ -355,7 +356,11 @@ export default defineComponent({
 
       let whatever = whatevers.find(whatever => this.overrideValues.get(whatever.identity));
 
-      let request = new Request('https://purple.is.mediocreatbest.xyz/fingle/', {
+      let url = new URL(config.API_URL);
+      url.pathname += `fingle/`;
+      url = url.toString();
+
+      let request = new Request(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -387,7 +392,7 @@ export default defineComponent({
 
       // get image, draw to ctx
       let image = await response.blob();
-      let url = URL.createObjectURL(image);
+      url = URL.createObjectURL(image);
       let img = new Image();
       let promise = new Promise((resolve) => {
         img.onload = resolve;

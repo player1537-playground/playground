@@ -48,6 +48,7 @@
 </template>
 
 <script setup>
+import config from '@/config';
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 
@@ -62,7 +63,11 @@ async function analyzeText() {
     best.value = [];
     isInRequest.value = true;
 
-    let response = await fetch('https://purple.is.mediocreatbest.xyz/analyze', {
+    let url = new URL(config.API_URL);
+    url.pathname += `analyze`;
+    url = url.toString();
+
+    let response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

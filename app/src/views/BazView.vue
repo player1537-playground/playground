@@ -193,6 +193,7 @@
 </template>
 
 <script>
+import config from '@/config';
 import { defineComponent } from 'vue';
 import logo_white from '@/assets/logo_white.svg';
 import ICD10CM from '@/assets/TabularICD10CM.json';
@@ -298,7 +299,11 @@ export default defineComponent({
         flashRecommendedProcedureCodes: true,
       });
 
-      let request = new Request('https://purple.is.mediocreatbest.xyz/dx2pd/', {
+      let url = new URL(config.API_URL);
+      url.pathname += `dx2pd/`;
+      url = url.toString();
+
+      let request = new Request(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -334,7 +339,11 @@ export default defineComponent({
         flashRecommendedDiagnosticCodes: true,
       });
 
-      let request = new Request('https://purple.is.mediocreatbest.xyz/pd2dx/', {
+      let url = new URL(config.API_URL);
+      url.pathname += `pd2dx/`;
+      url = url.toString();
+
+      let request = new Request(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -370,7 +379,11 @@ export default defineComponent({
         flashRecommendedDiagnosticCodes: true,
       });
 
-      let request = new Request('https://purple.is.mediocreatbest.xyz/dx2dx/', {
+      let url = new URL(config.API_URL);
+      url.pathname += `dx2dx/`;
+      url = url.toString();
+
+      let request = new Request(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -406,7 +419,11 @@ export default defineComponent({
         flashRecommendedProcedureCodes: true,
       });
 
-      let request = new Request('https://purple.is.mediocreatbest.xyz/pd2pd/', {
+      let url = new URL(config.API_URL);
+      url.pathname += `pd2pd/`;
+      url = url.toString();
+
+      let request = new Request(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -441,7 +458,11 @@ export default defineComponent({
         flashRecommendedDiagnosticCodes: true,
       });
 
-      let request = new Request('https://purple.is.mediocreatbest.xyz/foo/', {
+      let url = new URL(config.API_URL);
+      url.pathname += `foo/`;
+      url = url.toString();
+
+      let request = new Request(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -476,7 +497,11 @@ export default defineComponent({
         flashRecommendedProcedureCodes: true,
       });
 
-      let request = new Request('https://purple.is.mediocreatbest.xyz/bar/', {
+      let url = new URL(config.API_URL);
+      url.pathname += `bar/`;
+      url = url.toString();
+
+      let request = new Request(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -512,7 +537,11 @@ export default defineComponent({
         flashRecommendedDiagnosticCodes: true,
       });
 
-      let request = new Request('https://purple.is.mediocreatbest.xyz/bing/', {
+      let url = new URL(config.API_URL);
+      url.pathname += `bing/`;
+      url = url.toString();
+
+      let request = new Request(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -548,7 +577,11 @@ export default defineComponent({
         flashRecommendedProcedureCodes: true,
       });
 
-      let request = new Request('https://purple.is.mediocreatbest.xyz/ping/', {
+      let url = new URL(config.API_URL);
+      url.pathname += `ping/`;
+      url = url.toString();
+
+      let request = new Request(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -90,6 +90,7 @@
 </template>
 
 <script setup>
+import config from '@/config';
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import vegaEmbed from 'vega-embed';
@@ -142,15 +143,24 @@ async function fetchData(resource, options = {}, cache = true) {
 }
 
 async function fetchSearchData() {
+  let url = new URL(config.API_URL);
+  url.pathname += `MIMIC-IV-Note/`
+  url.pathname += `discharge/${encodeURIComponent(hadm_id.value)}/`;
+  url = url.toString();
+
   try {
-    const response = await fetchData(`https://purple.is.mediocreatbest.xyz/MIMIC-IV-Note/discharge/${hadm_id.value}/`, {}, false);
+    const response = await fetchData(url, {}, false);
     dischargeSummary.value = response?.course || '';
   } catch (error) {
     console.error('Error fetching discharge summary:', error);
   }
 
+  url = new URL(config.API_URL);
+  url.pathname += `dip/`;
+  url = url.toString();
+
   try {
-    const response = await fetchData(`https://purple.is.mediocreatbest.xyz/dip/`, {
+    const response = await fetchData(url, {
       body: JSON.stringify({
         limit: N_LIMIT,
         text: dischargeSummary.value
@@ -293,8 +303,12 @@ async function fetchDescriptions(data) {
  * @returns {Promise<number>} - The score.
  */
 async function fetchScore(dxCodes, pdCodes, what = 'Positive-Negative') {
+  let url = new URL(config.API_URL);
+  url.pathname += `reward/`;
+  url = url.toString();
+
   try {
-    return await fetchData('https://purple.is.mediocreatbest.xyz/reward/', {
+    return await fetchData(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -314,7 +328,11 @@ async function fetchUnderpayment(dxCodes, pdCodes) {
     throw new Error('No procedure codes provided.');
   }
 
-  return await fetchData('https://purple.is.mediocreatbest.xyz/underpayment/', {
+  let url = new URL(config.API_URL);
+  url.pathname += `underpayment/`;
+  url = url.toString();
+
+  return await fetchData(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -331,8 +349,12 @@ async function fetchHeatmapData() {
   let acceptance = {};
   let rejections = {};
 
+  let url = new URL(config.API_URL);
+  url.pathname += `ring/`;
+  url = url.toString();
+
   try {
-    acceptance = await fetchData('https://purple.is.mediocreatbest.xyz/ring/', {
+    acceptance = await fetchData(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -345,8 +367,12 @@ async function fetchHeatmapData() {
     console.error('Error fetching heatmap data:', error);
   }
 
+  url = new URL(config.API_URL);
+  url.pathname += `ring/`;
+  url = url.toString();
+
   try {
-    rejections = await fetchData('https://purple.is.mediocreatbest.xyz/ring/', {
+    rejections = await fetchData(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
