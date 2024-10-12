@@ -8,6 +8,23 @@ from ._config import config
 from . import util
 
 
+def _S3Client() -> auto.boto3.client:
+    client = auto.boto3.client(
+        's3',
+        aws_access_key_id=config.aws.access_key_id,
+        aws_secret_access_key=config.aws.secret_access_key,
+    )
+
+    return client
+
+
+@auto.functools.cache
+def S3Client() -> auto.boto3.client:
+    client = _S3Client()
+
+    return client
+
+
 def _Database(
     *,
     path: auto.pathlib.Path | auto.typing.Literal[...] = ...,
@@ -32,10 +49,10 @@ def _Database(
                 enchash TEXT NOT NULL
             );
         ''')
-        
+
         database.execute(sqlquery)
         database.commit()
-    
+
     return path
 
 
@@ -47,7 +64,7 @@ def Database() -> auto.sqlite3.Connection:
         path,
         check_same_thread=False,
     )
-    
+
     return database
 
 
@@ -119,6 +136,10 @@ async def upload_post(
         auto.sqlite3.Connection,
         auto.fastapi.Depends(Database),
     ],
+    client: auto.typing.Annotated[
+        auto.boto3.client,
+        auto.fastapi.Depends(S3Client),
+    ],
 ):
     if not auth:
         return auto.fastapi.Response(
@@ -147,25 +168,21 @@ async def upload_post(
 
         enchash = await auto.asyncio.to_thread(util.checksum, encfile)
         encfile.seek(0)
-
-        root = config.datadir / dechash[:2]
-        root.mkdir(parents=True, exist_ok=True)
-
-        path = root / dechash[2:]
-        with path.open('wb') as f:
-            await auto.asyncio.to_thread(
-                auto.shutil.copyfileobj,
-                encfile,
-                f,
-            )
+        
+        util.upload(
+            client = client,
+            file = encfile,
+            bucket = 'visualiz-upload',
+            name = f'{dechash[:2]}/{dechash[2:]}'
+        )
 
         hashes.append((dechash, enchash))
-        
+
         sqlquery = util.SQLQuery(r'''
             INSERT INTO upload (filename, dechash, enchash)
             VALUES (?, ?, ?);
         ''')
-        
+
         database.execute(sqlquery, (filename, dechash, enchash))
         database.commit()
 

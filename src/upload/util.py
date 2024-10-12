@@ -122,3 +122,21 @@ def SQLQuery(s: str, /, **kwargs):
     template = environment.from_string(s)
 
     return template.render(**kwargs)
+
+
+def upload(
+    *,
+    client: auto.boto3.client,
+    file,
+    bucket: str,
+    name: str,
+):
+    try:
+        client.upload_fileobj(
+            file,
+            bucket,
+            name,
+        )
+
+    except auto.botocore.exceptions.ClientError as e:
+        raise e

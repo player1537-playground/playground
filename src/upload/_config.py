@@ -23,3 +23,7 @@ assert config.encryption_key_name in auto.os.environ, config.encryption_key_name
 config.login = auto.types.SimpleNamespace()
 config.login.username = auto.os.environ['UPLOAD_LOGIN_USERNAME']
 config.login.password = auto.os.environ['UPLOAD_LOGIN_PASSWORD']
+
+config.aws = auto.types.SimpleNamespace()
+config.aws.access_key_id = auto.os.environ['UPLOAD_AWS_ACCESS_KEY_ID']
+config.aws.secret_access_key = auto.os.environ['UPLOAD_AWS_SECRET_ACCESS_KEY']

@@ -24,6 +24,7 @@ go-Initialize-Environment() {
         "uvicorn"
         "jinja2"
         "python-multipart"
+        "boto3"
     )
 
     pexec "${environment:?}/bin/pip" install \
@@ -43,6 +44,12 @@ go-Initialize-Environment() {
 
     UPLOAD_LOGIN_PASSWORD=${upload_login_password:?}
     export UPLOAD_LOGIN_PASSWORD
+
+    UPLOAD_AWS_ACCESS_KEY_ID=${upload_aws_access_key_id:?}
+    export UPLOAD_AWS_ACCESS_KEY_ID
+
+    UPLOAD_AWS_SECRET_ACCESS_KEY=${upload_aws_secret_access_key:?}
+    export UPLOAD_AWS_SECRET_ACCESS_KEY
 }
 
 server_host="https://purple.is.mediocreatbest.xyz/upload/"
